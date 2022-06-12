@@ -1,20 +1,26 @@
-from datetime import datetime as dt
 import streamlit as st
 import plotly.express as px
 import pandas as pd
 import data_handler as dh
-from PIL import Image
 
 
 def create_top(df):
-    st.title("PoE Skill Gem Profit Margin Calculator (v0.6.1 - Work in Progress)")
+    st.title("PoE - Profit Margins For Leveling Skill Gems (v0.7.0 - Work in Progress)")
+
     # create content
-    st.header("TOP 10 Gems to Level...")
+    st.header("A) TOP 10 Gems to Level for Profit")
+
+    st.subheader("Settings")
     # st.write("Choose wisely:")
     low_conf = st.checkbox(label="Hide Low Confidence", value=True)
     hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=True)
     create_top_table(df, hide_conf=low_conf, hide_corr=hide_corrupted_gems, mode="margin")
     create_top_table(df, hide_conf=low_conf, hide_corr=hide_corrupted_gems, mode="roi")
+
+    LEAGUE = dh.load_league()
+    LAST_UPDATE = dh.last_update()
+    comment = f"PoE.ninja data for league \'{LEAGUE}\' from {LAST_UPDATE}"
+    st.caption(comment)
 
     with st.expander("Read me"):
         st.write("""
@@ -35,16 +41,11 @@ def create_top(df):
 
 def create_top_table(df, hide_conf, hide_corr, mode):
     if mode == "margin":
-        st.subheader("...by Margin")
+        st.subheader("... by Margin")
     elif mode == "roi":
-        st.subheader("...by RoI / Req. Exp.")
+        st.subheader("... by RoI / Req. Exp.")
     else:
         ValueError("Choose appropriate Top 10 table settings.")
-
-    LEAGUE = dh.load_league()
-    LAST_UPDATE = dh.last_update()
-    comment = f"PoE.ninja data for league \'{LEAGUE}\' from {LAST_UPDATE}"
-    st.caption(comment)
 
     if hide_conf:
         df_top10 = df[df["listing_count"] >= 10]
@@ -104,13 +105,13 @@ def drop_special_gems(df, alt_gem, awaken, exception):
 
 def create_plot(df):
     # ui elements
-    st.header('Want to dig deeper?')
+    st.header('B) Want to dig deeper?')
 
     # input elements
     col3, colx, col4 = st.columns([3, 1, 5])
 
     with col3:
-        st.subheader("Choose your settings:")
+        st.subheader("Settings")
         input_min_roi = st.slider('Minimum Return on Investment:',
                                   value=10,
                                   min_value=0,
@@ -137,7 +138,7 @@ def create_plot(df):
         exceptional = st.checkbox('Exceptional Gems (Enlighten etc.)', value=True)
 
     with col4:
-        st.subheader("Hover to see more info:")
+        st.subheader("Hover the graph for more info")
         # filter as specified in the input
         df_ = df[df["roi"] >= input_min_roi]
         df_ = df_[df_["buy_c"] >= input_buyin]
@@ -206,7 +207,7 @@ def create_plot(df):
                              log_y=True,
                              )
 
-        st.caption("Margin vs. Buying Price plot. Marker size indicates the RoI.")
+        st.caption("Margin vs. Buying Price plot. Marker size indicates the RoI. Logarithmic scale.")
         st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("---")
@@ -215,7 +216,7 @@ def create_plot(df):
 
 def create_FAQ():
     # ------------------------------------------------------------------------------------------------------------------
-    st.header("Thoughts")
+    st.header("C) Thoughts")
     with st.expander("Expand me"):  # TODO: write explanation
         st.write("""
             **How is the margin calculated?** \n
