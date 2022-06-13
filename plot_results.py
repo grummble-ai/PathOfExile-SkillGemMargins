@@ -5,7 +5,7 @@ import data_handler as dh
 
 
 def create_top(df):
-    st.title("PoE - Profit Margins For Leveling Skill Gems (v0.7.0 - Work in Progress)")
+    st.title("PoE - Profit Margins For Leveling Skill Gems (v0.8.0 - Work in Progress)")
 
     # create content
     st.header("A) TOP 10 Gems to Level for Profit")
@@ -31,7 +31,7 @@ def create_top(df):
             level certain gems to their maximum level. AT THE MOMENT IT IS ASSUMED THAT EVERY GEM IS LEVELED FROM 0 
             TO MAX. LVL AND NOT, E.G., STARTING FROM 16/0. \n
             **No. of Trade Listing?** Indicated the number of listings available on trade. PoE.ninja considers a 
-            number smaller than 10 to be "low evidence" which you should do as well. 
+            number smaller than 10 to be "low evidence" which you should do as well. \n
             **Why hide corrupted gems?** Because, by using a Vaal Orb, you have a 1 in 8 chance to get those which
             is simply not reliant. 
         """)
@@ -216,12 +216,12 @@ def create_plot(df):
 
 def create_FAQ():
     # ------------------------------------------------------------------------------------------------------------------
-    st.header("C) Thoughts")
-    with st.expander("Expand me"):  # TODO: write explanation
+    st.header("C) Misc")
+    with st.expander("Food for thought"):
         st.write("""
             **How is the margin calculated?** \n
             Ideally you want to know what the best average outcome for any given 
-            gem is. There are 4 corruption outcomes: \n
+            gem is when >corrupting< them. There are 4 corruption outcomes: \n
                 - No effect (other than adding the corrupted property) \n
                 - Add or subtract one level. Max level gems can exceed their normal maximum this way. A corrupted 
                 gem at the normal maximum will not continue to gain experience. \n
@@ -229,19 +229,24 @@ def create_FAQ():
                 - Change the gem to its corresponding Vaal Gem. \n
             
             Sometimes 23% quality gems are worth a bit. Sometimes even a corrupted lvl 20 (no change) outcome yields 
-            some money. Sometimes they aren't worth anything. \n
+            some money. Sometimes they aren't worth anything afterwards. \n
             
-            So to correctly estimate the potential earnings, it would be better to average over all 4 outcomes and 
-            not just to look at what the "big bang" (adding one level) would yield. And, in fact, the big bang is 
-            not even a 25% chance but rather a 1 in 8 chance if you're just using a Vaal Orb instead of the temple 
-            corruption.  \n
-            
-            However, this is a difficult task since the poe.ninja API does not provide all outcomes for all gems 
-            and when it does, the listing count often is too small to have any significance. Please stick to 
-            uncorrupted gems (typically [20/20]) if you want to aim for the guaranteed margin.  
+            So, for the corrupting use-case, to correctly estimate the potential earnings, it would be better to 
+            average over all 4 outcomes. And this is quite a complex case, since when corrupting you have to 
+            differentiate between normal (Vaal Orbs) and temple corrupts. \n
+             
             \n
             **Why do some gems that can be bought from Lily Roth have a selling price > 1c?** \n
-            Good catch! The problem is that no one lists 
+            Good catch! The problem is that no one lists these gems on trade for the same price as when you buy them 
+            from her. Not sure if I'm going to solve this though, as, right now, the script should maintain itself, i.e.
+            the program should work in future leagues and adding gem specific logic could break this (think of new gem
+            releases that would require to rework the code every time).
+        """)
+    with st.expander("Changelog"):
+        st.write("""
+            **Version 0.8.0** \n
+            - Fixed a bug where some corrupted versions of gems were used as a starting point of the analysis
+            - Rewrote some info in the expanders
         """)
 
     st.empty()

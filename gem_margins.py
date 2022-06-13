@@ -3,8 +3,6 @@ import data_handler as dh
 
 pd.options.mode.chained_assignment = None
 
-import sqlite3
-
 GEM_EXPERIENCE_AWAKENED = 1920762677  # to level 5; #TODO: awakened gems seem to have different xp requirements?
 GEM_EXPERIENCE_ENLEMPENH = 1666045137  # to level 3; for enhance, empower and enlighten
 GEM_EXPERIENCE_BLOODANDSAND = 529166003  # to level 6;
@@ -57,10 +55,13 @@ def calculate_chaos_values(df):
         df_ = df[df['name'] == gems]
 
         # find the cheapest entry in the group and use it as a basis
-        df_min = df_[df_.gemQuality == df_.gemQuality.min()]
+        df_min = df_[df_.corrupted == df_.corrupted.min()]
+        df_min = df_min[df_min.gemQuality == df_min.gemQuality.min()]
         df_min = df_min[df_min.gemLevel == df_min.gemLevel.min()]
         df_min = df_min[df_min.value_chaos == df_min.value_chaos.min()]
-        df_min = df_min[df_min.corrupted == df_min.corrupted.min()]
+        # # For debugging
+        # if df_min.corrupted[0] is True:
+        #     print(f"no uncorrupted version found for gem: {gems}")
 
         # iterate through every single gem entry for a give gem (e.g. 8/0, 16/0 and 20/20 for Lightning Strike)
         for i in range(df_.shape[0]):
