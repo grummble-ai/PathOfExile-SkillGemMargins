@@ -267,7 +267,7 @@ def create_sidebar():
                      "https://discord.com/channels/827836172184584214/981558870507929648)")
     st.sidebar.write("If you are interested in PoE Tips, solid builds and step-by-step guides consider subscribing "
                      "to my [YT channel](https://www.youtube.com/c/PoEAcademy)")
-    st.sidebar.write("And if you find this tool useful, you might even consider buying me a coffee:")
+    st.sidebar.write("And if you find this project useful, you might even consider supporting it:")
     with st.sidebar:
         components.html(
             '''
