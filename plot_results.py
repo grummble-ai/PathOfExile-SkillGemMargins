@@ -15,8 +15,9 @@ def create_top(df):
     # st.write("Choose wisely:")
     low_conf = st.checkbox(label="Hide Low Confidence", value=True)
     hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=True)
-    create_top_table(df, hide_conf=low_conf, hide_corr=hide_corrupted_gems, mode="margin")
-    create_top_table(df, hide_conf=low_conf, hide_corr=hide_corrupted_gems, mode="roi")
+    hide_quality_gems = st.checkbox(label="Hide Gems with Quality", value=False)
+    create_top_table(df, hide_conf=low_conf, hide_corr=hide_corrupted_gems, hide_qual=hide_quality_gems, mode="margin")
+    create_top_table(df, hide_conf=low_conf, hide_corr=hide_corrupted_gems, hide_qual=hide_quality_gems, mode="roi")
 
     LEAGUE = dh.load_league()
     LAST_UPDATE = dh.last_update()
@@ -42,7 +43,7 @@ def create_top(df):
     st.empty()
 
 
-def create_top_table(df, hide_conf, hide_corr, mode):
+def create_top_table(df, hide_conf, hide_corr, hide_qual, mode):
     if mode == "margin":
         st.subheader("... by Margin")
     elif mode == "roi":
@@ -57,6 +58,9 @@ def create_top_table(df, hide_conf, hide_corr, mode):
 
     if hide_corr:
         df_top10 = df_top10[df_top10["corrupted"] == 0]
+
+    if hide_qual:
+        df_top10 = df_top10[df_top10["gemQuality"] == 0]
 
     if mode == "margin":
         # grab the 10 best gems to level by margin
@@ -251,6 +255,7 @@ def create_FAQ():
         st.write("""
             **Version 0.9.0** \n
             - Improved gem xp calculation. Required gem experience is now calculated precisely for regular gems. 
+            - Added more settings for the main tables (especially gems with quality)
             - Slight improvements to the UI. \n
             **Version 0.8.0** \n
             - Fixed a bug where some corrupted versions of gems were used as a starting point of the analysis
