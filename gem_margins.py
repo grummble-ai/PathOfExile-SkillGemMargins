@@ -7,7 +7,7 @@ GEM_EXPERIENCE_AWAKENED = 1920762677  # to level 5; #TODO: awakened gems seem to
 GEM_EXPERIENCE_ENLEMPENH = 1666045137  # to level 3; for enhance, empower and enlighten
 GEM_EXPERIENCE_BLOODANDSAND = 529166003  # to level 6;
 GEM_EXPERIENCE_BRANDRECALL = 341913067  # to level 6
-GEM_EXPERIENCE_REGULAR = 1666045137  # to level 3;
+GEM_EXPERIENCE_REGULAR = 684009294  # to level 20/20;
 MAX_EXP = max(GEM_EXPERIENCE_AWAKENED, GEM_EXPERIENCE_ENLEMPENH, GEM_EXPERIENCE_BLOODANDSAND,
               GEM_EXPERIENCE_BRANDRECALL, GEM_EXPERIENCE_REGULAR)
 
@@ -39,6 +39,18 @@ def add_gem_colors(df):
     for gem in gem_colors:
         # print(gem[0])
         df.loc[df['name'].str.contains(gem[0]), 'gem_color'] = gem[1]
+
+    return df
+
+
+def add_gem_types(df):
+    df['gem_type'] = "regular"
+    df.loc[df['name'].str.contains("Awakened"), 'gem_type'] = "awakened"
+    df.loc[df['name'].str.contains("Enlighten"), 'gem_type'] = "exceptional"
+    df.loc[df['name'].str.contains("Empower"), 'gem_type'] = "exceptional"
+    df.loc[df['name'].str.contains("Enhance"), 'gem_type'] = "exceptional"
+    df.loc[df['name'] == "Blood and Sand", 'gem_type'] = "special"
+    df.loc[df['name'] == "Brand Recall", 'gem_type'] = "special"
 
     return df
 
@@ -78,8 +90,10 @@ def calculate_chaos_values(df):
             df_gem["margin_c"] = margin_c
             df_gem["roi"] = roi_c
 
+            df_gem["gem_level_base"] = df_min['gemLevel'].values[0]
+            df_gem["gem_quality_base"] = df_min['gemQuality'].values[0]
+
             # upgrade path
-            # TODO: Add differentiation between corrupted and none-corrupted?
             if df_gem["corrupted"].values[0]:
                 df_gem["upgrade_path"] = '[' + str(df_min['gemLevel'].values[0]) \
                                          + '/' + str(df_min['gemQuality'].values[0]) \
@@ -105,11 +119,49 @@ def calculate_exalted_values(df, C_TO_EX):
     return df
 
 
-def calculate_roi_norm_and_ranking(df):
-    # --- normalize roi depending on xp required ---
+def xp_requirement_regular_gems(df):
+    df_reg_gem_xp = pd.read_pickle("utility/regular_gem_xp_df")
+
+    # iterate through all entries in gem list
+    for i in df.index:
+        gem_type = df.iloc[i]["gem_type"]
+        if gem_type == "regular":
+            gem_level_base = df.iloc[i]["gem_level_base"]
+            gem_quali_base = df.iloc[i]["gem_quality_base"]
+            gem_level = df.iloc[i]["gemLevel"]
+            gem_quali = df.iloc[i]["gemQuality"]
+            gem_name = df.iloc[i]["name"]
+
+            if gem_quali_base > 0:
+                ind_x = gem_level_base - 1 + 20
+            else:
+                ind_x = gem_level_base - 1
+
+            if gem_quali > 0 and 1 <= gem_level <= 20:
+                ind_y = gem_level - 1 + 20
+            elif gem_quali > 0 and gem_level == 21:
+                ind_y = gem_level - 2 + 20
+            else:
+                ind_y = gem_level - 1
+
+            xp_required_raw = df_reg_gem_xp.iloc[ind_y]
+            xp_required = xp_required_raw.iloc[ind_x]
+            if xp_required == 0:
+                ValueError(f"Look up table did not work correctly for regular gem -{gem_name}- on index -{i}-.")
+
+            margin_ex_norm = df.iloc[i]['margin_ex'] / (xp_required / MAX_EXP)
+            df.loc[i, 'margin_gem_specific'] = margin_ex_norm
+
+
+    return df
+
+
+def calculate_margin_per_xp_and_ranking(df):
+    # --- normalize margin depending on xp required ---
     # normalize all gems with regular rating
     # TODO: This should be individual, e.g., 8/0 -> 20/20 != 16/0 -> 20/20
-    df['margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE['regular_norm']
+
+    # df['margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE['regular_norm']
     df.loc[df['name'].str.contains("Awakened"), 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE[
         'awakened_norm']
     df.loc[df['name'].str.contains("Enlighten"), 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE[
@@ -121,6 +173,8 @@ def calculate_roi_norm_and_ranking(df):
     df.loc[df['name'] == "Blood and Sand", 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE[
         'bloodandsand_norm']
     df.loc[df['name'] == "Brand Recall", 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE['brandrecall_norm']
+
+    df = xp_requirement_regular_gems(df)
 
     # rank entries after roi
     df["ranking_from_margin_gem_specific"] = df['margin_ex'].rank(ascending=False)
@@ -163,6 +217,9 @@ def calculate_margins():
     df = df[~df.name.str.contains("Vaal")]
 
     # df["gem_info"] = ""
+    df["gem_type"] = ""
+    df["gem_level_base"] = ""
+    df["gem_quality_base"] = ""
     df["upgrade_path"] = ""
     df["buy_c"] = ""
     df["sell_c"] = ""
@@ -175,14 +232,15 @@ def calculate_margins():
     df["ranking_from_roi"] = ""
     df["gem_color"] = ""
 
+    df = add_gem_types(df)
+
     df = calculate_chaos_values(df)
 
     df = calculate_exalted_values(df, C_TO_EX)
 
-    df = calculate_roi_norm_and_ranking(df)
+    df = calculate_margin_per_xp_and_ranking(df)
 
     df = add_gem_colors(df)
 
-    # todo: save df to json here
     gems_analyzed = df.to_dict(orient="index")
     dh.save_json(gems_analyzed)

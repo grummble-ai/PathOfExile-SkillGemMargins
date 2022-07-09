@@ -28,9 +28,11 @@ def create_top(df):
             **What am I looking at?** The tables show the top 10 results by margin and RoI in Exalted Orbs.\n
             **Margin?** Selling price - Buying Price \n
             **RoI?** - Return on Investment; RoI = (Selling price - Buying Price) / Buying Price \n
-            **Margin / Req. Exp.?** Margin but normalized, i.e. taking into account different amounts of xp to 
-            level certain gems to their maximum level. AT THE MOMENT IT IS ASSUMED THAT EVERY GEM IS LEVELED FROM 0 
-            TO MAX. LVL AND NOT, E.G., STARTING FROM 16/0. \n
+            **Margin / Rel. Exp.?** Margin but normalized, i.e. taking into account different amounts of xp to 
+            level certain gems to their maximum level. The highest amount is 1.920.762.677 for awakened gems. A regular 
+            gem requires 684.009.294 xp to be leveled from 1/0 to 20/20. Therefore, the margin of the regular gem
+            is divided by 684.009.294 / 1.920.762.677 = 0.3428 to account for faster leveling of the regular gem, i.e.,
+            increasing the margin of the regular gem compared to an awakened gem. \n
             **No. of Trade Listing?** Indicated the number of listings available on trade. PoE.ninja considers a 
             number smaller than 10 to be "low evidence" which you should do as well. \n
             **Why hide corrupted gems?** Because, by using a Vaal Orb, you have a 1 in 8 chance to get those which
@@ -44,7 +46,7 @@ def create_top_table(df, hide_conf, hide_corr, mode):
     if mode == "margin":
         st.subheader("... by Margin")
     elif mode == "roi":
-        st.subheader("... by RoI / Req. Exp.")
+        st.subheader("... by Return of Investment")
     else:
         ValueError("Choose appropriate Top 10 table settings.")
 
@@ -65,22 +67,24 @@ def create_top_table(df, hide_conf, hide_corr, mode):
 
     # drop unnecessary columns
     df_top10 = df_top10.drop(["value_chaos", "value_exalted", "created", "datetime", "corrupted", "qualityType",
-                              "skill", "gemQuality", "gemLevel", "levelRequired", "icon_url", "buy_c", "sell_c",
-                              "margin_c", "gem_color", "ranking_from_roi", "ranking_from_margin_gem_specific"], axis=1)
+                              "skill", "gemQuality", "gem_type", "gemLevel", "levelRequired", "gem_level_base",
+                              "gem_quality_base",
+                              "icon_url", "buy_c", "sell_c", "margin_c", "gem_color", "ranking_from_roi",
+                              "ranking_from_margin_gem_specific"], axis=1)
 
     df_top10 = df_top10.rename(columns={"name": "Skill Gem",
                                         "upgrade_path": "Upgrade Path",
                                         "buy_ex": "Buy (Ex)",
                                         "sell_ex": "Sell (Ex)",
                                         "margin_ex": "Margin (Ex)",
-                                        "margin_gem_specific": "Margin / Req. Exp.",
+                                        "margin_gem_specific": "Margin / Rel. Exp.",
                                         # "average_returns_ex": "Average Returns (Ex)",
                                         "roi": "RoI",
                                         "listing_count": "No. Trade Listings"
                                         })
 
     if mode == "margin":
-        df_top10 = df_top10.rename(columns={"Margin / Req. Exp.": "Margin / Req. Exp. ▼"})
+        df_top10 = df_top10.rename(columns={"Margin / Rel. Exp.": "Margin / Rel. Exp. ▼"})
     elif mode == "roi":
         df_top10 = df_top10.rename(columns={"RoI": "RoI ▼"})
 
