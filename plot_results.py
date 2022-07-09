@@ -6,7 +6,7 @@ import streamlit.components.v1 as components
 
 
 def create_top(df):
-    st.title("PoE - Profit Margins For Leveling Skill Gems (v0.8.0 - Work in Progress)")
+    st.title("Profit Margins For Skill Gem Leveling in Path of Exile (v0.9.0 - Work in Progress)")
 
     # create content
     st.header("A) TOP 10 Gems to Level for Profit")
@@ -249,6 +249,9 @@ def create_FAQ():
         """)
     with st.expander("Changelog"):
         st.write("""
+            **Version 0.9.0** \n
+            - Improved gem xp calculation. Required gem experience is now calculated precisely for regular gems. 
+            - Slight improvements to the UI. \n
             **Version 0.8.0** \n
             - Fixed a bug where some corrupted versions of gems were used as a starting point of the analysis
             - Rewrote some info in the expanders
@@ -286,12 +289,24 @@ def load_data():
     return df
 
 
+def settings():
+    st.set_page_config(
+        page_title="PoE Academy's Gem Workshop",
+        layout="wide",
+        initial_sidebar_state="expanded",
+        menu_items={
+            'Get Help': 'https://discord.com/channels/827836172184584214/981558870507929648',
+            'Report a bug': "https://discord.com/channels/827836172184584214/981558870507929648",
+            'About': "This app was made to help choosing the right gems to level in Path of Exile for profit."
+        }
+    )
+
+
 # @st.cache
 def create_site():
-    df = load_data()
+    settings()
 
-    # settings
-    st.set_page_config(layout="wide")
+    df = load_data()
 
     create_top(df)
 

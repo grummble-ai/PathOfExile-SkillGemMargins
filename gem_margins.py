@@ -152,15 +152,11 @@ def xp_requirement_regular_gems(df):
             margin_ex_norm = df.iloc[i]['margin_ex'] / (xp_required / MAX_EXP)
             df.loc[i, 'margin_gem_specific'] = margin_ex_norm
 
-
     return df
 
 
 def calculate_margin_per_xp_and_ranking(df):
     # --- normalize margin depending on xp required ---
-    # normalize all gems with regular rating
-    # TODO: This should be individual, e.g., 8/0 -> 20/20 != 16/0 -> 20/20
-
     # df['margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE['regular_norm']
     df.loc[df['name'].str.contains("Awakened"), 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE[
         'awakened_norm']
@@ -174,10 +170,11 @@ def calculate_margin_per_xp_and_ranking(df):
         'bloodandsand_norm']
     df.loc[df['name'] == "Brand Recall", 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE['brandrecall_norm']
 
+    # calculate margins for regular gems
     df = xp_requirement_regular_gems(df)
 
     # rank entries after roi
-    df["ranking_from_margin_gem_specific"] = df['margin_ex'].rank(ascending=False)
+    df["ranking_from_margin_gem_specific"] = df['margin_gem_specific'].rank(ascending=False)
     df["ranking_from_roi"] = df['roi'].rank(ascending=False)
 
     # sort out all rows with no return of investment (margin 0 or even negative)
