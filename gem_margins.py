@@ -131,6 +131,11 @@ def xp_requirement_regular_gems(df):
             gem_level = df.iloc[i]["gemLevel"]
             gem_quali = df.iloc[i]["gemQuality"]
             gem_name = df.iloc[i]["name"]
+            # print(" \n ")
+            # print(f"i: {i}")
+            # print("name: " + gem_name)
+            # print(f"Base: [{gem_level_base}/{gem_quali_base}]")
+            # print(f"Target: [{gem_level}/{gem_quali}]")
 
             if gem_quali_base > 0:
                 ind_x = gem_level_base - 1 + 20
@@ -145,11 +150,17 @@ def xp_requirement_regular_gems(df):
                 ind_y = gem_level - 1
 
             xp_required_raw = df_reg_gem_xp.iloc[ind_y]
-            xp_required = xp_required_raw.iloc[ind_x]
-            if xp_required == 0:
-                ValueError(f"Look up table did not work correctly for regular gem -{gem_name}- on index -{i}-.")
 
-            margin_ex_norm = df.iloc[i]['margin_ex'] / (xp_required / MAX_EXP)
+            # print(f"ind_y: {ind_y}")
+            # print(f"ind_x: {ind_x}")
+
+            # ind_x 40 represents 0 xp -> we don't want to divide by 0
+            if ind_x == 40:
+                margin_ex_norm = df.iloc[i]['margin_ex']
+            else:
+                xp_required = xp_required_raw.iloc[ind_x]
+                margin_ex_norm = df.iloc[i]['margin_ex'] / (xp_required / MAX_EXP)
+
             df.loc[i, 'margin_gem_specific'] = margin_ex_norm
 
     return df

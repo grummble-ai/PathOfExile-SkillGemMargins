@@ -6,7 +6,7 @@ import streamlit.components.v1 as components
 
 
 def create_top(df):
-    st.title("Profit Margins For Skill Gem Leveling in Path of Exile (v0.9.0 - Work in Progress)")
+    st.title("Profit Margins For Skill Gem Leveling in Path of Exile (v0.9.1 - Work in Progress)")
 
     # create content
     st.header("A) TOP 10 Gems to Level for Profit")
@@ -253,6 +253,8 @@ def create_FAQ():
         """)
     with st.expander("Changelog"):
         st.write("""
+            **Version 0.9.1** \n
+            - Fixed a bug when Margin / Rel. Exp.
             **Version 0.9.0** \n
             - Improved gem xp calculation. Required gem experience is now calculated precisely for regular gems. 
             - Added more settings for the main tables (especially gems with quality)
