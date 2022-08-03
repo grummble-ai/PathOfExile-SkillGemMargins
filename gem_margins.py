@@ -122,6 +122,8 @@ def calculate_exalted_values(df, C_TO_EX):
 def xp_requirement_regular_gems(df):
     df_reg_gem_xp = pd.read_pickle("utility/regular_gem_xp_df")
 
+    # warnings.simplefilter('error')
+
     # iterate through all entries in gem list
     for i in df.index:
         gem_type = df.iloc[i]["gem_type"]
@@ -131,37 +133,31 @@ def xp_requirement_regular_gems(df):
             gem_level = df.iloc[i]["gemLevel"]
             gem_quali = df.iloc[i]["gemQuality"]
             gem_name = df.iloc[i]["name"]
-            # print(" \n ")
-            # print(f"i: {i}")
-            # print("name: " + gem_name)
-            # print(f"Base: [{gem_level_base}/{gem_quali_base}]")
-            # print(f"Target: [{gem_level}/{gem_quali}]")
 
-            if gem_quali_base > 0:
-                ind_x = gem_level_base - 1 + 20
-            else:
-                ind_x = gem_level_base - 1
+            # don't do anything if they have the same level / qual
+            if not (gem_level_base == gem_level and gem_quali_base == gem_quali):
+                # find the right number in the xp matrix
+                if gem_quali_base > 0:
+                    ind_x = gem_level_base - 1 + 20
+                else:
+                    ind_x = gem_level_base - 1
 
-            if gem_quali > 0 and 1 <= gem_level <= 20:
-                ind_y = gem_level - 1 + 20
-            elif gem_quali > 0 and gem_level == 21:
-                ind_y = gem_level - 2 + 20
-            else:
-                ind_y = gem_level - 1
+                if gem_quali > 0 and 1 <= gem_level <= 20:
+                    ind_y = gem_level - 1 + 20
+                elif gem_quali > 0 and gem_level == 21:
+                    ind_y = gem_level - 2 + 20
+                else:
+                    ind_y = gem_level - 1
 
-            xp_required_raw = df_reg_gem_xp.iloc[ind_y]
-
-            # print(f"ind_y: {ind_y}")
-            # print(f"ind_x: {ind_x}")
-
-            # ind_x 40 represents 0 xp -> we don't want to divide by 0
-            if ind_x == 40:
-                margin_ex_norm = df.iloc[i]['margin_ex']
-            else:
+                xp_required_raw = df_reg_gem_xp.iloc[ind_y]
                 xp_required = xp_required_raw.iloc[ind_x]
                 margin_ex_norm = df.iloc[i]['margin_ex'] / (xp_required / MAX_EXP)
 
-            df.loc[i, 'margin_gem_specific'] = margin_ex_norm
+                df.loc[i, 'margin_gem_specific'] = margin_ex_norm
+
+            else:
+                # mainly used for the same gems: [16/0] -> [16/0] no xp so margin_gem_specific == margin_ex
+                df.loc[i, 'margin_gem_specific'] = df.iloc[i]["margin_ex"]
 
     return df
 
