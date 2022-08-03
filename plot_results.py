@@ -6,7 +6,7 @@ import streamlit.components.v1 as components
 
 
 def create_top(df):
-    st.title("Profit Margins For Skill Gem Leveling in Path of Exile (v0.9.1 - Work in Progress)")
+    st.title("Profit Margins For Skill Gem Leveling in Path of Exile (v0.9.2 - wip)")
 
     # create content
     st.header("A) TOP 10 Gems to Level for Profit")
