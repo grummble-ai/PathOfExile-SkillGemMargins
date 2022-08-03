@@ -13,11 +13,16 @@ def create_top(df):
 
     st.subheader("Settings")
     # st.write("Choose wisely:")
-    low_conf = st.checkbox(label="Hide Low Confidence", value=True)
-    hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=True)
-    hide_quality_gems = st.checkbox(label="Hide Gems with Quality", value=False)
-    create_top_table(df, hide_conf=low_conf, hide_corr=hide_corrupted_gems, hide_qual=hide_quality_gems, mode="margin")
-    create_top_table(df, hide_conf=low_conf, hide_corr=hide_corrupted_gems, hide_qual=hide_quality_gems, mode="roi")
+
+    colfirst, ph1, ph2 = st.columns([3, 1, 5])
+    with colfirst:
+        low_conf = st.checkbox(label="Hide Low Confidence", value=True)
+        nr_conf = st.number_input('Set low confidence threshold here:', min_value=0, value=10)
+        hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=True)
+        hide_quality_gems = st.checkbox(label="Hide Gems with Quality", value=False)
+
+    create_top_table(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems, hide_qual=hide_quality_gems, mode="margin")
+    create_top_table(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems, hide_qual=hide_quality_gems, mode="roi")
 
     LEAGUE = dh.load_league()
     LAST_UPDATE = dh.last_update()
@@ -43,7 +48,7 @@ def create_top(df):
     st.empty()
 
 
-def create_top_table(df, hide_conf, hide_corr, hide_qual, mode):
+def create_top_table(df, hide_conf, nr_conf, hide_corr, hide_qual, mode):
     if mode == "margin":
         st.subheader("... by Margin")
     elif mode == "roi":
@@ -52,7 +57,7 @@ def create_top_table(df, hide_conf, hide_corr, hide_qual, mode):
         ValueError("Choose appropriate Top 10 table settings.")
 
     if hide_conf:
-        df_top10 = df[df["listing_count"] >= 10]
+        df_top10 = df[df["listing_count"] >= nr_conf]
     else:
         df_top10 = df
 
@@ -253,6 +258,9 @@ def create_FAQ():
         """)
     with st.expander("Changelog"):
         st.write("""
+            **Version 0.9.2** \n
+            - Fixed a bug when Margin / Rel. Exp. (again)
+            - Added the possibility to set a custom low confidence threshold 
             **Version 0.9.1** \n
             - Fixed a bug when Margin / Rel. Exp.
             **Version 0.9.0** \n
