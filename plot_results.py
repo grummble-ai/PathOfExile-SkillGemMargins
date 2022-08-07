@@ -6,7 +6,7 @@ import streamlit.components.v1 as components
 
 
 def create_top(df):
-    st.title("Profit Margins For Skill Gem Leveling in Path of Exile (v0.9.2 - wip)")
+    st.title("Profit Margins For Skill Gem Leveling in Path of Exile (v0.9.3 - wip)")
 
     # create content
     st.header("A) TOP 10 Gems to Level for Profit")
@@ -17,7 +17,7 @@ def create_top(df):
     colfirst, ph1, ph2 = st.columns([3, 1, 5])
     with colfirst:
         low_conf = st.checkbox(label="Hide Low Confidence", value=True)
-        nr_conf = st.number_input('Set low confidence threshold here:', min_value=0, value=10)
+        nr_conf = st.number_input('Set low confidence threshold here:', min_value=0, value=50)
         hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=True)
         hide_quality_gems = st.checkbox(label="Hide Gems with Quality", value=False)
 
@@ -258,6 +258,10 @@ def create_FAQ():
         """)
     with st.expander("Changelog"):
         st.write("""
+            **Version 0.9.3** \n
+            - The default value for the low confidence filter is now set to 50 the remove most unwanted results. 
+              (It seems that poe.ninja has a more sophisticated approach than this but, unfortunately, its api response
+              does not provide the low confidence information.)
             **Version 0.9.2** \n
             - Fixed a bug when Margin / Rel. Exp. (again)
             - Added the possibility to set a custom low confidence threshold 
