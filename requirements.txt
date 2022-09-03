@@ -1,4 +1,4 @@
-streamlit==1.11.1
+streamlit==1.12.2
 plotly==5.6.0
 pandas==1.4.1
 DateTime==4.4

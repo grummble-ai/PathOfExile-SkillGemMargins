@@ -6,12 +6,11 @@ import streamlit.components.v1 as components
 
 
 def create_top(df):
-    st.title("Profit Margins For Skill Gem Leveling in Path of Exile (v0.9.3 - wip)")
+    st.title("Profit Margins For Skill Gem Leveling in Path of Exile (v0.10.0 - wip)")
 
     # create content
-    st.header("A) TOP 10 Gems to Level for Profit")
-
-    st.subheader("Settings")
+    st.header("A) TOP 10 Gems to Level for Profit...")
+    st.subheader("Setup")
     # st.write("Choose wisely:")
 
     colfirst, ph1, ph2 = st.columns([3, 1, 5])
@@ -21,29 +20,16 @@ def create_top(df):
         hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=True)
         hide_quality_gems = st.checkbox(label="Hide Gems with Quality", value=False)
 
+    create_FAQ()
+
     create_top_table(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems, hide_qual=hide_quality_gems, mode="margin")
     create_top_table(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems, hide_qual=hide_quality_gems, mode="roi")
 
     LEAGUE = dh.load_league()
     LAST_UPDATE = dh.last_update()
-    comment = f"PoE.ninja data for league \'{LEAGUE}\' from {LAST_UPDATE}"
+    DIV_PRICE = dh.load_divine_price()
+    comment = f"PoE.ninja data for league \'{LEAGUE}\' from {LAST_UPDATE}. Today's divine price in chaos is {DIV_PRICE}"
     st.caption(comment)
-
-    with st.expander("Read me"):
-        st.write("""
-            **What am I looking at?** The tables show the top 10 results by margin and RoI in Exalted Orbs.\n
-            **Margin?** Selling price - Buying Price \n
-            **RoI?** - Return on Investment; RoI = (Selling price - Buying Price) / Buying Price \n
-            **Margin / Rel. Exp.?** Margin but normalized, i.e. taking into account different amounts of xp to 
-            level certain gems to their maximum level. The highest amount is 1.920.762.677 for awakened gems. A regular 
-            gem requires 684.009.294 xp to be leveled from 1/0 to 20/20. Therefore, the margin of the regular gem
-            is divided by 684.009.294 / 1.920.762.677 = 0.3428 to account for faster leveling of the regular gem, i.e.,
-            increasing the margin of the regular gem compared to an awakened gem. \n
-            **No. of Trade Listing?** Indicated the number of listings available on trade. PoE.ninja considers a 
-            number smaller than 10 to be "low evidence" which you should do as well. \n
-            **Why hide corrupted gems?** Because, by using a Vaal Orb, you have a 1 in 8 chance to get those which
-            is simply not reliant. 
-        """)
     st.markdown("---")
     st.empty()
 
@@ -75,7 +61,7 @@ def create_top_table(df, hide_conf, nr_conf, hide_corr, hide_qual, mode):
         df_top10 = df_top10.nsmallest(10, "ranking_from_roi", keep="first")
 
     # drop unnecessary columns
-    df_top10 = df_top10.drop(["value_chaos", "value_exalted", "created", "datetime", "corrupted", "qualityType",
+    df_top10 = df_top10.drop(["value_chaos", "value_divine", "created", "datetime", "corrupted", "qualityType",
                               "skill", "gemQuality", "gem_type", "gemLevel", "levelRequired", "gem_level_base",
                               "gem_quality_base",
                               "icon_url", "buy_c", "sell_c", "margin_c", "gem_color", "ranking_from_roi",
@@ -83,9 +69,9 @@ def create_top_table(df, hide_conf, nr_conf, hide_corr, hide_qual, mode):
 
     df_top10 = df_top10.rename(columns={"name": "Skill Gem",
                                         "upgrade_path": "Upgrade Path",
-                                        "buy_ex": "Buy (Ex)",
-                                        "sell_ex": "Sell (Ex)",
-                                        "margin_ex": "Margin (Ex)",
+                                        "buy_divine": "Buy (Divine)",
+                                        "sell_divine": "Sell (Divine)",
+                                        "margin_divine": "Margin (Divine)",
                                         "margin_gem_specific": "Margin / Rel. Exp.",
                                         # "average_returns_ex": "Average Returns (Ex)",
                                         "roi": "RoI",
@@ -186,7 +172,7 @@ def create_plot(df):
                                  "gem_color": "Gem Color"
                              },
                              hover_data=["name",
-                                         "margin_ex",
+                                         "margin_divine",
                                          "margin_gem_specific",
                                          "roi"
                                          ],
@@ -213,7 +199,7 @@ def create_plot(df):
                                  "gem_color": "Gem Color"
                              },
                              hover_data=["name",
-                                         "margin_ex",
+                                         "margin_divine",
                                          "margin_gem_specific",
                                          "roi"
                                          ],
@@ -228,39 +214,84 @@ def create_plot(df):
     st.empty()
 
 
-def create_FAQ():
+def create_misc():
     # ------------------------------------------------------------------------------------------------------------------
     st.header("C) Misc")
-    with st.expander("Food for thought"):
+    # with st.expander("Random Thoughts"):
+    #     st.write("""
+    #             **How is the margin calculated?** \n
+    #             Ideally you want to know what the best average outcome for any given
+    #             gem is when >corrupting< them. There are 4 corruption outcomes: \n
+    #                 - No effect (other than adding the corrupted property) \n
+    #                 - Add or subtract one level. Max level gems can exceed their normal maximum this way. A corrupted
+    #                 gem at the normal maximum will not continue to gain experience. \n
+    #                 - Add or subtract 1-20 quality. Gems can have up to 23% quality this way. \n
+    #                 - Change the gem to its corresponding Vaal Gem. \n
+    #
+    #             Sometimes 23% quality gems are worth a bit. Sometimes even a corrupted lvl 20 (no change) outcome yields
+    #             some money. Sometimes they aren't worth anything afterwards. \n
+    #
+    #             So, for the corrupting use-case, to correctly estimate the potential earnings, it would be better to
+    #             average over all 4 outcomes. And this is quite a complex case, since when corrupting you have to
+    #             differentiate between normal (Vaal Orbs) and temple corrupts. \n
+    #
+    #             \n
+    #             **Why do some gems that can be bought from Lily Roth have a selling price > 1c?** \n
+    #             Good catch! The problem is that no one lists these gems on trade for the same price as when you buy them
+    #             from her. Not sure if I'm going to solve this though, as, right now, the script should maintain itself, i.e.
+    #             the program should work in future leagues and adding gem specific logic could break this (think of new gem
+    #             releases that would require to rework the code every time).
+    #         """)
+    create_changelog()
+
+    st.empty()
+    st.markdown("---")
+    st.markdown("This site is not affiliated with, funded, or in any way associated with Grinding Gear Games.")
+
+
+def create_FAQ():
+    with st.expander("FAQ (click me)"):
         st.write("""
-            **How is the margin calculated?** \n
-            Ideally you want to know what the best average outcome for any given 
-            gem is when >corrupting< them. There are 4 corruption outcomes: \n
-                - No effect (other than adding the corrupted property) \n
-                - Add or subtract one level. Max level gems can exceed their normal maximum this way. A corrupted 
-                gem at the normal maximum will not continue to gain experience. \n
-                - Add or subtract 1-20 quality. Gems can have up to 23% quality this way. \n
-                - Change the gem to its corresponding Vaal Gem. \n
-            
-            Sometimes 23% quality gems are worth a bit. Sometimes even a corrupted lvl 20 (no change) outcome yields 
-            some money. Sometimes they aren't worth anything afterwards. \n
-            
-            So, for the corrupting use-case, to correctly estimate the potential earnings, it would be better to 
-            average over all 4 outcomes. And this is quite a complex case, since when corrupting you have to 
-            differentiate between normal (Vaal Orbs) and temple corrupts. \n
-             
-            \n
-            **Why do some gems that can be bought from Lily Roth have a selling price > 1c?** \n
-            Good catch! The problem is that no one lists these gems on trade for the same price as when you buy them 
-            from her. Not sure if I'm going to solve this though, as, right now, the script should maintain itself, i.e.
-            the program should work in future leagues and adding gem specific logic could break this (think of new gem
-            releases that would require to rework the code every time).
+            - **Setup** \n
+            **Why hide low confidence?** Because PoE.ninja considers a count smaller than 10 to be "low evidence" 
+            which you should do as well. \n
+            **Why is the default value for the low confidence threshold 50 not 10?** There are two reasons: First,
+            it seems that sometimes poe.ninja does have additional criterion for determining whether or not a gem is
+            tagged with low confidence, but its API doesn't contain this information. Second, you want to look for 
+            liquid markets. If there are many listings for a certain gem you can be sure that there is a market for it
+            and that you will be able to trade your gems quickly. \n
+            **Why hide corrupted gems?** Because, by using a Vaal Orb, you have a 1 in 8 chance to get those which
+            is simply not reliant. \n
+            **Why hide gems with quality?** Because there are some cases (e.g. auras), where you don't need to level 
+            them twice (1/0 to 20/0; and 1/20 to 20/20) to get the full return \n   
+            - **Tables**\n
+            **No. of Trade Listing?** Indicated the number of listings available on trade. \n
+            **Buy (Divine)** The buying price of the gem in Divine Orbs. Why do most orbs that can be bought from Lilly
+            Roth cost 1c? Well, because no one lists them for their vendor price. I think this is negligible for your 
+            decision on which gem to level so I have no plans on implementing a double check for this. \n
+            **Sell (Divine)** The selling price of the gem in Divine Orbs. \n
+            **Margin?** Selling price - Buying Price \n
+            **Margin / Rel. Exp.?** Margin but normalized, i.e. taking into account different amounts of xp to 
+            level certain gems to their maximum level. The highest amount is 1.920.762.677 for awakened gems. A regular 
+            gem requires 684.009.294 xp to be leveled from 1/0 to 20/20. Therefore, the margin of the regular gem
+            is divided by 684.009.294 / 1.920.762.677 = 0.3428 to account for faster leveling of the regular gem, i.e.,
+            increasing the margin of the regular gem compared to an awakened gem. \n
+            **RoI?** - Return on Investment; RoI = (Selling price - Buying Price) / Buying Price \n
         """)
+
+
+def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 0.10.0** \n
+            - Reworked the FAQ and added a lot more information to it
+            - Added minor improvements to the layout
+            - Changed the refernce currency from Exalted Orbs (good by my old friend) to Divine Orbs
+            - Removed a long standing bug where the Exalted (now Divine) Orb to Chaos Orb ratio was not calculated correctly
+            - Update to Streamlit 1.12.2
             **Version 0.9.3** \n
             - The default value for the low confidence filter is now set to 50 the remove most unwanted results. 
-              (It seems that poe.ninja has a more sophisticated approach than this but, unfortunately, its api response
+              (It seems that poe.ninja has a more sophisticated approach than this but, unfortunately, its API response
               does not provide the low confidence information.)
             **Version 0.9.2** \n
             - Fixed a bug when Margin / Rel. Exp. (again)
@@ -275,10 +306,6 @@ def create_FAQ():
             - Fixed a bug where some corrupted versions of gems were used as a starting point of the analysis
             - Rewrote some info in the expanders
         """)
-
-    st.empty()
-    st.markdown("---")
-    st.markdown("This site is not affiliated with, funded, or in any way associated with Grinding Gear Games.")
 
 
 def create_sidebar():
@@ -331,6 +358,6 @@ def create_site():
 
     create_plot(df)
 
-    create_FAQ()
+    create_misc()
 
     create_sidebar()

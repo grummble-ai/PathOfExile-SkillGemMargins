@@ -25,8 +25,8 @@ GEM_EXPERIENCE = {"awakened": GEM_EXPERIENCE_AWAKENED,
 
 
 def get_ex_value(df):
-    ex_value = df.loc['Exalted Orb'][0]
-    df['value_exalted'] = df['value'].div(ex_value)
+    divine_value = df.loc['Divine Orb'][0]
+    df['value_divine'] = df['value'].div(divine_value)
     return df
 
 
@@ -111,10 +111,10 @@ def calculate_chaos_values(df):
     return df_analyzed
 
 
-def calculate_exalted_values(df, C_TO_EX):
-    df['buy_ex'] = df['buy_c'].div(C_TO_EX)
-    df['sell_ex'] = df['sell_c'].div(C_TO_EX)
-    df['margin_ex'] = df['margin_c'].div(C_TO_EX)
+def calculate_divine_values(df, C_TO_DIV):
+    df['buy_divine'] = df['buy_c'].div(C_TO_DIV)
+    df['sell_divine'] = df['sell_c'].div(C_TO_DIV)
+    df['margin_divine'] = df['margin_c'].div(C_TO_DIV)
 
     return df
 
@@ -151,31 +151,31 @@ def xp_requirement_regular_gems(df):
 
                 xp_required_raw = df_reg_gem_xp.iloc[ind_y]
                 xp_required = xp_required_raw.iloc[ind_x]
-                margin_ex_norm = df.iloc[i]['margin_ex'] / (xp_required / MAX_EXP)
+                margin_divine_norm = df.iloc[i]['margin_divine'] / (xp_required / MAX_EXP)
 
-                df.loc[i, 'margin_gem_specific'] = margin_ex_norm
+                df.loc[i, 'margin_gem_specific'] = margin_divine_norm
 
             else:
-                # mainly used for the same gems: [16/0] -> [16/0] no xp so margin_gem_specific == margin_ex
-                df.loc[i, 'margin_gem_specific'] = df.iloc[i]["margin_ex"]
+                # mainly used for the same gems: [16/0] -> [16/0] no xp so margin_gem_specific == margin_divine
+                df.loc[i, 'margin_gem_specific'] = df.iloc[i]["margin_divine"]
 
     return df
 
 
 def calculate_margin_per_xp_and_ranking(df):
     # --- normalize margin depending on xp required ---
-    # df['margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE['regular_norm']
-    df.loc[df['name'].str.contains("Awakened"), 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE[
+    # df['margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE['regular_norm']
+    df.loc[df['name'].str.contains("Awakened"), 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
         'awakened_norm']
-    df.loc[df['name'].str.contains("Enlighten"), 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE[
+    df.loc[df['name'].str.contains("Enlighten"), 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
         'enlempenh_norm']
-    df.loc[df['name'].str.contains("Empower"), 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE[
+    df.loc[df['name'].str.contains("Empower"), 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
         'enlempenh_norm']
-    df.loc[df['name'].str.contains("Enhance"), 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE[
+    df.loc[df['name'].str.contains("Enhance"), 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
         'enlempenh_norm']
-    df.loc[df['name'] == "Blood and Sand", 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE[
+    df.loc[df['name'] == "Blood and Sand", 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
         'bloodandsand_norm']
-    df.loc[df['name'] == "Brand Recall", 'margin_gem_specific'] = df['margin_ex'] / GEM_EXPERIENCE['brandrecall_norm']
+    df.loc[df['name'] == "Brand Recall", 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE['brandrecall_norm']
 
     # calculate margins for regular gems
     df = xp_requirement_regular_gems(df)
@@ -212,7 +212,7 @@ def calculate_margins():
     data_gem = pd.DataFrame.from_dict(dict_gem, orient="index")
 
     # --- currency ---
-    C_TO_EX = data_cur[data_cur['name'] == "Exalted Orb"]['value_chaos'].values[0]
+    C_TO_DIV = data_cur[data_cur['name'] == "Divine Orb"]['value_chaos'].values[0]
 
     # --- gems ---
     # sort gems
@@ -228,9 +228,9 @@ def calculate_margins():
     df["buy_c"] = ""
     df["sell_c"] = ""
     df["margin_c"] = ""
-    df["buy_ex"] = ""
-    df["sell_ex"] = ""
-    df["margin_ex"] = ""
+    df["buy_divine"] = ""
+    df["sell_divine"] = ""
+    df["margin_divine"] = ""
     df["margin_gem_specific"] = ""
     df["roi"] = ""
     df["ranking_from_roi"] = ""
@@ -240,7 +240,7 @@ def calculate_margins():
 
     df = calculate_chaos_values(df)
 
-    df = calculate_exalted_values(df, C_TO_EX)
+    df = calculate_divine_values(df, C_TO_DIV)
 
     df = calculate_margin_per_xp_and_ranking(df)
 

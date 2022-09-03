@@ -115,9 +115,9 @@ def get_item_chaos_value(item_json):
         return item_json['chaosEquivalent']
 
 
-def get_item_exalted_value(item_json):
+def get_item_divine_value(item_json):
     try:
-        return item_json['exaltedValue']
+        return item_json['divineValue']
     except KeyError:
         return item_json['chaosEquivalent']
 
@@ -143,13 +143,14 @@ def get_skillGem_quality(item_json):
 
 
 # Return data structure:
-# dict[item name][key], for example to get Exalted Orb price, use data['Exalted Orb']['value']
 def parse_category(json_data, category_name):
     category_data = {}
     timestamp = datetime.now().isoformat()
 
     if category_name == 'Currency':
-        exalted_price = json_data['lines'][7]['chaosEquivalent']
+        divine_dict = next(item for item in json_data["lines"] if item["currencyTypeName"] == "Divine Orb")
+        divine_price_in_chaos = divine_dict["chaosEquivalent"]
+        save_divine_price(divine_price_in_chaos)
 
     for i, line in enumerate(json_data['lines']):
         item = json_data['lines'][i]
@@ -158,9 +159,9 @@ def parse_category(json_data, category_name):
         category_data[i]['value_chaos'] = get_item_chaos_value(item)
 
         if category_name == 'Currency':
-            category_data[i]['value_exalted'] = get_item_exalted_value(item) / exalted_price
+            category_data[i]['value_divine'] = get_item_divine_value(item) / divine_price_in_chaos
         else:
-            category_data[i]['value_exalted'] = get_item_exalted_value(item)
+            category_data[i]['value_divine'] = get_item_divine_value(item)
 
         category_data[i]['created'] = timestamp
         category_data[i]['datetime'] = datetime.fromisoformat(timestamp).strftime(DATETIME_FORMAT)
@@ -276,6 +277,18 @@ def load_all_categories():
     save_raw_json(category_data)
     print("Successfully saved data to data.json")
     print("\n")
+
+
+def save_divine_price(value):
+    with open("DivPriceInChaos.txt", "wt") as f:
+        f.write(str(value))
+
+
+def load_divine_price():
+    with open("DivPriceInChaos.txt", "r") as f:
+        lines = f.readlines()
+        div_val = lines[0]
+    return div_val
 
 
 def get_category_list():
