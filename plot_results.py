@@ -4,44 +4,70 @@ import pandas as pd
 import data_handler as dh
 import streamlit.components.v1 as components
 
+VERSION = "v1.0.0"
+
 
 def create_top(df):
-    st.title("Profit Margins For Skill Gem Leveling in Path of Exile (v0.10.0 - wip)")
+    st.title(f"PoE Academy's Skill Gem Leveling Helper {VERSION}")
+    st.write("Hey exile, welcome to this tool to find skill gems that you can level for profit. I hated the process "
+             "of going through poe.ninja manually to find suitable skill gems, which is why I've decided to create"
+             "a small tool that does this automatically. Since the tool accesses both poe.ninja's and GGG's API, it"
+             " should continue to work unless there are some game-breaking changes (which I will work around anyways).")
 
-    # create content
-    st.header("A) TOP 10 Gems to Level for Profit...")
-    st.subheader("Setup")
-    # st.write("Choose wisely:")
-
-    colfirst, ph1, ph2 = st.columns([3, 1, 5])
+    st.subheader("Set your personal constraints:")
+    colfirst, ph1, colsecond, ph2 = st.columns([2, 1, 3, 3])
     with colfirst:
         low_conf = st.checkbox(label="Hide Low Confidence", value=True)
-        nr_conf = st.number_input('Set low confidence threshold here:', min_value=0, value=50)
+        nr_conf = st.number_input('Set low confidence threshold here:', min_value=0, value=30)
+    with colsecond:
         hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=True)
         hide_quality_gems = st.checkbox(label="Hide Gems with Quality", value=False)
 
-    create_FAQ()
+    st.empty()
 
-    create_top_table(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems, hide_qual=hide_quality_gems, mode="margin")
-    create_top_table(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems, hide_qual=hide_quality_gems, mode="roi")
+    tab1, tab2 = st.tabs(["💰 Results Sorted by Margin / Rel. XP", "💸 Results Sorted by Return of Investment"])
+    with tab1:
+        create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
+                             hide_qual=hide_quality_gems, mode="margin_rel")
+    with tab2:
+        create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
+                             hide_qual=hide_quality_gems, mode="roi")
 
     LEAGUE = dh.load_league()
     LAST_UPDATE = dh.last_update()
     DIV_PRICE = dh.load_divine_price()
-    comment = f"PoE.ninja data for league \'{LEAGUE}\' from {LAST_UPDATE}. Today's divine price in chaos is {DIV_PRICE}"
-    st.caption(comment)
+    st.empty()
+    league_info = f"PoE.ninja data for league \'{LEAGUE}\' from {LAST_UPDATE}. Today's divine price in chaos is {DIV_PRICE}"
+    st.caption(league_info)
+    st.empty()
+    create_FAQ()
+    st.empty()
+    create_changelog()
     st.markdown("---")
     st.empty()
 
 
-def create_top_table(df, hide_conf, nr_conf, hide_corr, hide_qual, mode):
-    if mode == "margin":
-        st.subheader("... by Margin")
-    elif mode == "roi":
-        st.subheader("... by Return of Investment")
-    else:
-        ValueError("Choose appropriate Top 10 table settings.")
+# Converting links to html tags
+def path_to_image_html(path):
+    return '<img src="' + path + '" width="40" >'
 
+
+def convert_df(input_df):
+    # IMPORTANT: Cache the conversion to prevent computation on every rerun
+    html = input_df.to_html(escape=False, formatters=dict(Icon=path_to_image_html), index=False)
+    html_title_centered = html.replace('<th>', '<th align="center">')
+    return html_title_centered
+
+
+def swap_df_columns(df, col1, col2):
+    col_list = list(df.columns)
+    x, y = col_list.index(col1), col_list.index(col2)
+    col_list[y], col_list[x] = col_list[x], col_list[y]
+    df = df[col_list]
+    return df
+
+
+def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, mode):
     if hide_conf:
         df_top10 = df[df["listing_count"] >= nr_conf]
     else:
@@ -54,6 +80,8 @@ def create_top_table(df, hide_conf, nr_conf, hide_corr, hide_qual, mode):
         df_top10 = df_top10[df_top10["gemQuality"] == 0]
 
     if mode == "margin":
+        df_top10 = df_top10.nlargest(10, "margin_divine", keep="first")
+    elif mode == "margin_rel":
         # grab the 10 best gems to level by margin
         df_top10 = df_top10.nsmallest(10, "ranking_from_margin_gem_specific", keep="first")
     elif mode == "roi":
@@ -63,27 +91,93 @@ def create_top_table(df, hide_conf, nr_conf, hide_corr, hide_qual, mode):
     # drop unnecessary columns
     df_top10 = df_top10.drop(["value_chaos", "value_divine", "created", "datetime", "corrupted", "qualityType",
                               "skill", "gemQuality", "gem_type", "gemLevel", "levelRequired", "gem_level_base",
-                              "gem_quality_base",
-                              "icon_url", "buy_c", "sell_c", "margin_c", "gem_color", "ranking_from_roi",
+                              "gem_quality_base", "sell_c", "margin_c", "gem_color", "ranking_from_roi",
                               "ranking_from_margin_gem_specific"], axis=1)
 
+    truncate_list = ["buy_divine", "sell_divine", "margin_divine", "margin_gem_specific", "roi"]
+    for col in truncate_list:
+        df_top10[col] = df_top10[col].map('{:,.3f}'.format)
+
+    # reindex icon url and name to show the icon first
+    df_top10 = swap_df_columns(df_top10, "name", "icon_url")
+
     df_top10 = df_top10.rename(columns={"name": "Skill Gem",
+                                        "icon_url": "Icon",
+                                        "buy_c": "Buy (Chaos)",
                                         "upgrade_path": "Upgrade Path",
                                         "buy_divine": "Buy (Divine)",
                                         "sell_divine": "Sell (Divine)",
                                         "margin_divine": "Margin (Divine)",
-                                        "margin_gem_specific": "Margin / Rel. Exp.",
+                                        "margin_gem_specific": "Margin / Rel. XP",
                                         # "average_returns_ex": "Average Returns (Ex)",
                                         "roi": "RoI",
                                         "listing_count": "No. Trade Listings"
                                         })
 
     if mode == "margin":
-        df_top10 = df_top10.rename(columns={"Margin / Rel. Exp.": "Margin / Rel. Exp. ▼"})
+        df_top10 = df_top10.rename(columns={"Margin (Divine)": "Margin (Divine) ▼"})
+    elif mode == "margin_rel":
+        df_top10 = df_top10.rename(columns={"Margin / Rel. XP": "Margin / Rel. XP ▼"})
     elif mode == "roi":
         df_top10 = df_top10.rename(columns={"RoI": "RoI ▼"})
 
-    st.table(df_top10)
+    html = convert_df(df_top10)
+    st.markdown(
+        html,
+        unsafe_allow_html=True
+    )
+
+
+# def create_top_table(df, hide_conf, nr_conf, hide_corr, hide_qual, mode):
+#     if mode == "margin":
+#         st.subheader("... by Margin")
+#     elif mode == "roi":
+#         st.subheader("... by Return of Investment")
+#     else:
+#         ValueError("Choose appropriate Top 10 table settings.")
+#
+#     if hide_conf:
+#         df_top10 = df[df["listing_count"] >= nr_conf]
+#     else:
+#         df_top10 = df
+#
+#     if hide_corr:
+#         df_top10 = df_top10[df_top10["corrupted"] == 0]
+#
+#     if hide_qual:
+#         df_top10 = df_top10[df_top10["gemQuality"] == 0]
+#
+#     if mode == "margin":
+#         # grab the 10 best gems to level by margin
+#         df_top10 = df_top10.nsmallest(10, "ranking_from_margin_gem_specific", keep="first")
+#     elif mode == "roi":
+#         # grab the 10 best gems to level by roi
+#         df_top10 = df_top10.nsmallest(10, "ranking_from_roi", keep="first")
+#
+#     # drop unnecessary columns
+#     df_top10 = df_top10.drop(["value_chaos", "value_divine", "created", "datetime", "corrupted", "qualityType",
+#                               "skill", "gemQuality", "gem_type", "gemLevel", "levelRequired", "gem_level_base",
+#                               "gem_quality_base",
+#                               "icon_url", "buy_c", "sell_c", "margin_c", "gem_color", "ranking_from_roi",
+#                               "ranking_from_margin_gem_specific"], axis=1)
+#
+#     df_top10 = df_top10.rename(columns={"name": "Skill Gem",
+#                                         "upgrade_path": "Upgrade Path",
+#                                         "buy_divine": "Buy (Divine)",
+#                                         "sell_divine": "Sell (Divine)",
+#                                         "margin_divine": "Margin (Divine)",
+#                                         "margin_gem_specific": "Margin / Rel. Exp.",
+#                                         # "average_returns_ex": "Average Returns (Ex)",
+#                                         "roi": "RoI",
+#                                         "listing_count": "No. Trade Listings"
+#                                         })
+#
+#     if mode == "margin":
+#         df_top10 = df_top10.rename(columns={"Margin / Rel. Exp.": "Margin / Rel. Exp. ▼"})
+#     elif mode == "roi":
+#         df_top10 = df_top10.rename(columns={"RoI": "RoI ▼"})
+#
+#     st.table(df_top10)
 
 
 def drop_special_gems(df, alt_gem, awaken, exception):
@@ -105,7 +199,7 @@ def drop_special_gems(df, alt_gem, awaken, exception):
 
 def create_plot(df):
     # ui elements
-    st.header('B) Want to dig deeper?')
+    st.header('Want to dig into the data yourself?')
 
     # input elements
     col3, colx, col4 = st.columns([3, 1, 5])
@@ -210,43 +304,15 @@ def create_plot(df):
         st.caption("Margin vs. Buying Price plot. Marker size indicates the RoI. Logarithmic scale.")
         st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("---")
-    st.empty()
-
-
-def create_misc():
-    # ------------------------------------------------------------------------------------------------------------------
-    st.header("C) Misc")
-    # with st.expander("Random Thoughts"):
-    #     st.write("""
-    #             **How is the margin calculated?** \n
-    #             Ideally you want to know what the best average outcome for any given
-    #             gem is when >corrupting< them. There are 4 corruption outcomes: \n
-    #                 - No effect (other than adding the corrupted property) \n
-    #                 - Add or subtract one level. Max level gems can exceed their normal maximum this way. A corrupted
-    #                 gem at the normal maximum will not continue to gain experience. \n
-    #                 - Add or subtract 1-20 quality. Gems can have up to 23% quality this way. \n
-    #                 - Change the gem to its corresponding Vaal Gem. \n
-    #
-    #             Sometimes 23% quality gems are worth a bit. Sometimes even a corrupted lvl 20 (no change) outcome yields
-    #             some money. Sometimes they aren't worth anything afterwards. \n
-    #
-    #             So, for the corrupting use-case, to correctly estimate the potential earnings, it would be better to
-    #             average over all 4 outcomes. And this is quite a complex case, since when corrupting you have to
-    #             differentiate between normal (Vaal Orbs) and temple corrupts. \n
-    #
-    #             \n
-    #             **Why do some gems that can be bought from Lily Roth have a selling price > 1c?** \n
-    #             Good catch! The problem is that no one lists these gems on trade for the same price as when you buy them
-    #             from her. Not sure if I'm going to solve this though, as, right now, the script should maintain itself, i.e.
-    #             the program should work in future leagues and adding gem specific logic could break this (think of new gem
-    #             releases that would require to rework the code every time).
-    #         """)
-    create_changelog()
-
     st.empty()
     st.markdown("---")
-    st.markdown("This site is not affiliated with, funded, or in any way associated with Grinding Gear Games.")
+
+
+@st.cache
+def create_rawdata(df):
+    # ui elements
+    create_top_table_img(df, hide_conf=False, nr_conf=0, hide_corr=False,
+                         hide_qual=False, mode="raw")
 
 
 def create_FAQ():
@@ -283,21 +349,23 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
-            **Version 0.10.0** \n
+            **Version 1.0.0** \n
+            - Included both tables into tabs for better navigation
+            - Added skill gem icons and buy (chaos) to the tables for better orientation 
             - Reworked the FAQ and added a lot more information to it
             - Added minor improvements to the layout
             - Changed the refernce currency from Exalted Orbs (good by my old friend) to Divine Orbs
             - Removed a long standing bug where the Exalted (now Divine) Orb to Chaos Orb ratio was not calculated correctly
             - Update to Streamlit 1.12.2
             **Version 0.9.3** \n
-            - The default value for the low confidence filter is now set to 50 the remove most unwanted results. 
-              (It seems that poe.ninja has a more sophisticated approach than this but, unfortunately, its API response
+            - The default value for the low confidence filter is now set to 30 the remove most unwanted results. 
+              (It seems that poe.ninja has a more sophisticated approach than this, but, unfortunately, its API response
               does not provide the low confidence information.)
             **Version 0.9.2** \n
-            - Fixed a bug when Margin / Rel. Exp. (again)
+            - Fixed a bug when calculating Margin / Rel. Exp. (again)
             - Added the possibility to set a custom low confidence threshold 
             **Version 0.9.1** \n
-            - Fixed a bug when Margin / Rel. Exp.
+            - Fixed a bug when calculating Margin / Rel. Exp.
             **Version 0.9.0** \n
             - Improved gem xp calculation. Required gem experience is now calculated precisely for regular gems. 
             - Added more settings for the main tables (especially gems with quality)
@@ -311,9 +379,10 @@ def create_changelog():
 def create_sidebar():
     # side bar
     try:
-        st.sidebar.image("logo_with_bg_transparent.png", use_column_width=True)
+        st.sidebar.write("This is a project made by **PoE Academy**. You may already be familiar with my YT logo:")
+        st.sidebar.image("logo_with_bg_transparent.png", width=150)
     except:
-        st.sidebar.header("PoE Academy")
+        st.sidebar.write("This is a project made by PoE Academy. You may already know me from my YT videos.")
 
     st.empty()
     st.sidebar.write("For feedback / questions feel free to use my [Discord Server]("
@@ -324,7 +393,7 @@ def create_sidebar():
     with st.sidebar:
         components.html(
             '''
-            <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="PoEAcademy" data-color="#FF5F5F" data-emoji="☕"  data-font="Inter" data-text="Buy me a coffee?" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+            <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="PoEAcademy" data-color="#FF5F5F" data-emoji="☕"  data-font="Inter" data-text="Great tool!" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
             '''
         )
 
@@ -358,6 +427,9 @@ def create_site():
 
     create_plot(df)
 
-    create_misc()
-
     create_sidebar()
+
+    # st.header('C) Raw results')
+    # create_rawdata(df)
+    st.write(f"You are working with {VERSION}; This site is not affiliated with, funded, or in any way associated "
+             f"with Grinding Gear Games.")
