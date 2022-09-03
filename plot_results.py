@@ -37,7 +37,7 @@ def create_top(df):
     LAST_UPDATE = dh.last_update()
     DIV_PRICE = dh.load_divine_price()
     st.empty()
-    league_info = f"PoE.ninja data for league \'{LEAGUE}\' from {LAST_UPDATE}. Today's divine price in chaos is {DIV_PRICE}"
+    league_info = f"Data from poe.ninja for league \'{LEAGUE}\' from {LAST_UPDATE} GMT+2. Current divine price is {DIV_PRICE} C."
     st.caption(league_info)
     st.empty()
     create_FAQ()
@@ -393,7 +393,7 @@ def create_sidebar():
     with st.sidebar:
         components.html(
             '''
-            <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="PoEAcademy" data-color="#FF5F5F" data-emoji="☕"  data-font="Inter" data-text="Great tool!" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+            <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="PoEAcademy" data-color="#FF5F5F" data-emoji="☕"  data-font="Inter" data-text="Great Tool!" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
             '''
         )
 
