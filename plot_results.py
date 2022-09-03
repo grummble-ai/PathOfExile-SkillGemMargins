@@ -6,6 +6,11 @@ import streamlit.components.v1 as components
 
 VERSION = "v1.0.0"
 
+#ToDo: going from 0 quality to 20 quality means flipping the gem, in practice, and should add xp needed equivalent to 1->20 the gem
+#ToDo: Gems you buy at level 1-19 should be considered level 1. It changes almost nothing, but would cull potential duplicates. Also, would induce less confusion for all alt qual gems being level 16
+#ToDo: Gems at 1-19 quality should be set at 0 quality, it doesn't matter if you'll flip the gem anyways
+#ToDo: For exeptional and awakened gems, missing quality should add 1c/qual% to the gem cost, since you'll pay for gcps yourself later on
+
 
 def create_top(df):
     st.title(f"PoE Academy's Skill Gem Leveling Helper {VERSION}")
@@ -14,7 +19,8 @@ def create_top(df):
              "a small tool that does this automatically. Since the tool accesses both poe.ninja's and GGG's API, it"
              " should continue to work unless there are some game-breaking changes (which I will work around anyways).")
 
-    st.subheader("Set your personal constraints:")
+    st.subheader("1: Set your Constraints:")
+
     colfirst, ph1, colsecond, ph2 = st.columns([2, 1, 3, 3])
     with colfirst:
         low_conf = st.checkbox(label="Hide Low Confidence", value=True)
@@ -23,8 +29,9 @@ def create_top(df):
         hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=True)
         hide_quality_gems = st.checkbox(label="Hide Gems with Quality", value=False)
 
-    st.empty()
+    st.write("_Info: The tables automatically update._\n")
 
+    st.subheader("2: Check the Results:")
     tab1, tab2 = st.tabs(["💰 Results Sorted by Margin / Rel. XP", "💸 Results Sorted by Return of Investment"])
     with tab1:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
@@ -43,8 +50,6 @@ def create_top(df):
     create_FAQ()
     st.empty()
     create_changelog()
-    st.markdown("---")
-    st.empty()
 
 
 # Converting links to html tags
@@ -197,115 +202,115 @@ def drop_special_gems(df, alt_gem, awaken, exception):
     return df
 
 
-def create_plot(df):
-    # ui elements
-    st.header('Want to dig into the data yourself?')
-
-    # input elements
-    col3, colx, col4 = st.columns([3, 1, 5])
-
-    with col3:
-        st.subheader("Settings")
-        input_min_roi = st.slider('Minimum Return on Investment:',
-                                  value=10,
-                                  min_value=0,
-                                  max_value=100,
-                                  step=1)
-        input_buyin = st.slider('Minimum Buy-In (Chaos Orbs):',
-                                min_value=0,
-                                value=0,
-                                max_value=100,
-                                step=1)
-        input_min_listings = st.number_input('Minimum No. of Listing on Trade:',
-                                             min_value=0,
-                                             value=10,
-                                             step=1,
-                                             format="%d")
-        st.caption("What gem colors to show:")
-        green = st.checkbox('Green Gems (Dexterity)', value=True)
-        red = st.checkbox('Red Gems (Strength)', value=True)
-        blue = st.checkbox('Blue Gems (Intelligence)', value=True)
-
-        st.caption("What special gems to show:")
-        alt_gems = st.checkbox('Alt. Gems (Phantasmal etc.)', value=True)
-        awakened = st.checkbox('Awakened Gems', value=True)
-        exceptional = st.checkbox('Exceptional Gems (Enlighten etc.)', value=True)
-
-    with col4:
-        st.subheader("Hover the graph for more info")
-        # filter as specified in the input
-        df_ = df[df["roi"] >= input_min_roi]
-        df_ = df_[df_["buy_c"] >= input_buyin]
-        df_ = df_[df_["listing_count"] >= input_min_listings]
-        if not green:
-            df_ = df_[df_["gem_color"] != "green"]
-        if not red:
-            df_ = df_[df_["gem_color"] != "red"]
-        if not blue:
-            df_ = df_[df_["gem_color"] != "blue"]
-
-        df_ = drop_special_gems(df_, alt_gem=alt_gems, awaken=awakened, exception=exceptional)
-
-        # workaround to make roi_gem_norm numeric (bug with plotly)
-        size = pd.to_numeric(df_.roi)
-
-        if df_.shape[0] < 15:
-            fig = px.scatter(df_,
-                             x="buy_c",
-                             y="margin_c",
-                             size=size,
-                             text="name",
-                             color="gem_color",
-                             color_discrete_map={"blue": "rgba(112, 112, 255, 0.8)",
-                                                 "green": "rgba(112, 255, 112, 0.8)",
-                                                 "red": "rgba(224, 80, 48, 0.8)",
-                                                 "white": "rgba(255, 255, 255, 0.8)"},
-                             labels={
-                                 "margin_c": "Margin (Chaos Orbs)",
-                                 "buy_c": "Buying Price (Chaos Orbs)",
-                                 "gem_color": "Gem Color"
-                             },
-                             hover_data=["name",
-                                         "margin_divine",
-                                         "margin_gem_specific",
-                                         "roi"
-                                         ],
-                             log_x=True,
-                             log_y=True,
-                             )
-            fig.update_traces(textposition='middle right')
-            fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-
-        else:
-            fig = px.scatter(df_,
-                             x="buy_c",
-                             y="margin_c",
-                             size=size,
-                             # text="name",
-                             color="gem_color",
-                             color_discrete_map={"blue": "rgba(112, 112, 255, 0.8)",
-                                                 "green": "rgba(112, 255, 112, 0.8)",
-                                                 "red": "rgba(224, 80, 48, 0.8)",
-                                                 "white": "rgba(255, 255, 255, 0.8)"},
-                             labels={
-                                 "margin_c": "Margin (Chaos Orbs)",
-                                 "buy_c": "Buying Price (Chaos Orbs)",
-                                 "gem_color": "Gem Color"
-                             },
-                             hover_data=["name",
-                                         "margin_divine",
-                                         "margin_gem_specific",
-                                         "roi"
-                                         ],
-                             log_x=True,
-                             log_y=True,
-                             )
-
-        st.caption("Margin vs. Buying Price plot. Marker size indicates the RoI. Logarithmic scale.")
-        st.plotly_chart(fig, use_container_width=True)
-
-    st.empty()
-    st.markdown("---")
+# def create_plot(df):
+#     # ui elements
+#     st.header('Want to dig into the data yourself?')
+#
+#     # input elements
+#     col3, colx, col4 = st.columns([3, 1, 5])
+#
+#     with col3:
+#         st.subheader("Settings")
+#         input_min_roi = st.slider('Minimum Return on Investment:',
+#                                   value=10,
+#                                   min_value=0,
+#                                   max_value=100,
+#                                   step=1)
+#         input_buyin = st.slider('Minimum Buy-In (Chaos Orbs):',
+#                                 min_value=0,
+#                                 value=0,
+#                                 max_value=100,
+#                                 step=1)
+#         input_min_listings = st.number_input('Minimum No. of Listing on Trade:',
+#                                              min_value=0,
+#                                              value=10,
+#                                              step=1,
+#                                              format="%d")
+#         st.caption("What gem colors to show:")
+#         green = st.checkbox('Green Gems (Dexterity)', value=True)
+#         red = st.checkbox('Red Gems (Strength)', value=True)
+#         blue = st.checkbox('Blue Gems (Intelligence)', value=True)
+#
+#         st.caption("What special gems to show:")
+#         alt_gems = st.checkbox('Alt. Gems (Phantasmal etc.)', value=True)
+#         awakened = st.checkbox('Awakened Gems', value=True)
+#         exceptional = st.checkbox('Exceptional Gems (Enlighten etc.)', value=True)
+#
+#     with col4:
+#         st.subheader("Hover the graph for more info")
+#         # filter as specified in the input
+#         df_ = df[df["roi"] >= input_min_roi]
+#         df_ = df_[df_["buy_c"] >= input_buyin]
+#         df_ = df_[df_["listing_count"] >= input_min_listings]
+#         if not green:
+#             df_ = df_[df_["gem_color"] != "green"]
+#         if not red:
+#             df_ = df_[df_["gem_color"] != "red"]
+#         if not blue:
+#             df_ = df_[df_["gem_color"] != "blue"]
+#
+#         df_ = drop_special_gems(df_, alt_gem=alt_gems, awaken=awakened, exception=exceptional)
+#
+#         # workaround to make roi_gem_norm numeric (bug with plotly)
+#         size = pd.to_numeric(df_.roi)
+#
+#         if df_.shape[0] < 15:
+#             fig = px.scatter(df_,
+#                              x="buy_c",
+#                              y="margin_c",
+#                              size=size,
+#                              text="name",
+#                              color="gem_color",
+#                              color_discrete_map={"blue": "rgba(112, 112, 255, 0.8)",
+#                                                  "green": "rgba(112, 255, 112, 0.8)",
+#                                                  "red": "rgba(224, 80, 48, 0.8)",
+#                                                  "white": "rgba(255, 255, 255, 0.8)"},
+#                              labels={
+#                                  "margin_c": "Margin (Chaos Orbs)",
+#                                  "buy_c": "Buying Price (Chaos Orbs)",
+#                                  "gem_color": "Gem Color"
+#                              },
+#                              hover_data=["name",
+#                                          "margin_divine",
+#                                          "margin_gem_specific",
+#                                          "roi"
+#                                          ],
+#                              log_x=True,
+#                              log_y=True,
+#                              )
+#             fig.update_traces(textposition='middle right')
+#             fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+#
+#         else:
+#             fig = px.scatter(df_,
+#                              x="buy_c",
+#                              y="margin_c",
+#                              size=size,
+#                              # text="name",
+#                              color="gem_color",
+#                              color_discrete_map={"blue": "rgba(112, 112, 255, 0.8)",
+#                                                  "green": "rgba(112, 255, 112, 0.8)",
+#                                                  "red": "rgba(224, 80, 48, 0.8)",
+#                                                  "white": "rgba(255, 255, 255, 0.8)"},
+#                              labels={
+#                                  "margin_c": "Margin (Chaos Orbs)",
+#                                  "buy_c": "Buying Price (Chaos Orbs)",
+#                                  "gem_color": "Gem Color"
+#                              },
+#                              hover_data=["name",
+#                                          "margin_divine",
+#                                          "margin_gem_specific",
+#                                          "roi"
+#                                          ],
+#                              log_x=True,
+#                              log_y=True,
+#                              )
+#
+#         st.caption("Margin vs. Buying Price plot. Marker size indicates the RoI. Logarithmic scale.")
+#         st.plotly_chart(fig, use_container_width=True)
+#
+#     st.empty()
+#     st.markdown("---")
 
 
 @st.cache
@@ -356,6 +361,7 @@ def create_changelog():
             - Added minor improvements to the layout
             - Changed the refernce currency from Exalted Orbs (good by my old friend) to Divine Orbs
             - Removed a long standing bug where the Exalted (now Divine) Orb to Chaos Orb ratio was not calculated correctly
+            - The "play with the data yourself" area has vanished as it was only really useful for creating this tool
             - Update to Streamlit 1.12.2
             **Version 0.9.3** \n
             - The default value for the low confidence filter is now set to 30 the remove most unwanted results. 
@@ -425,7 +431,7 @@ def create_site():
 
     create_top(df)
 
-    create_plot(df)
+    # create_plot(df)
 
     create_sidebar()
 
