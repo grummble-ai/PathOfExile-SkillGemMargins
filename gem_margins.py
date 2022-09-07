@@ -37,9 +37,7 @@ def add_gem_colors(df):
     df_colors = df_colors[~(df_colors == 0).any(axis=1)]
     gem_colors = df_colors.values.tolist()
     for gem in gem_colors:
-        # print(gem[0])
-        df.loc[df['name'].str.contains(gem[0]), 'gem_color'] = gem[1]
-
+        df.loc[df['skill'] == gem[0], 'gem_color'] = gem[1]
     return df
 
 

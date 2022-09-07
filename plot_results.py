@@ -1,54 +1,106 @@
 import streamlit as st
-import plotly.express as px
+from PIL import Image
 import pandas as pd
 import data_handler as dh
 import streamlit.components.v1 as components
 
 VERSION = "v1.0.0"
 
-#ToDo: going from 0 quality to 20 quality means flipping the gem, in practice, and should add xp needed equivalent to 1->20 the gem
-#ToDo: Gems you buy at level 1-19 should be considered level 1. It changes almost nothing, but would cull potential duplicates. Also, would induce less confusion for all alt qual gems being level 16
-#ToDo: Gems at 1-19 quality should be set at 0 quality, it doesn't matter if you'll flip the gem anyways
-#ToDo: For exeptional and awakened gems, missing quality should add 1c/qual% to the gem cost, since you'll pay for gcps yourself later on
+#TODO: Finish settings and add button to site that can restore default settings // Could be done with sessionstate
+DEFAULT_SETTINGS = {
+    "hide_corrupted": True,
+    "hide_quality": False,
+    "hide_low_confidence": True,
+    "low_confidence_threshold": 30,
+    "show_gem_color_green": True,
+    "show_gem_color_red": True,
+    "show_gem_color_blue": True,
+    "show_gem_type_alt": True,
+    "show_gem_type_awk": True,
+    "show_gem_type_exc": True,
+    "default_min_roi": 10,
+    "default_min_chaos": 0,
+}
+
+# ToDo: going from 0 quality to 20 quality means flipping the gem, in practice, and should add xp needed equivalent to 1->20 the gem
+# ToDo: Gems you buy at level 1-19 should be considered level 1. It changes almost nothing, but would cull potential duplicates. Also, would induce less confusion for all alt qual gems being level 16
+# ToDo: Gems at 1-19 quality should be set at 0 quality, it doesn't matter if you'll flip the gem anyways
+# ToDo: For exeptional and awakened gems, missing quality should add 1c/qual% to the gem cost, since you'll pay for gcps yourself later on
 
 
 def create_top(df):
     st.title(f"PoE Academy's Skill Gem Leveling Helper {VERSION}")
-    st.write("Hey exile, welcome to this tool to find skill gems that you can level for profit. I hated the process "
-             "of going through poe.ninja manually to find suitable skill gems, which is why I've decided to create"
-             "a small tool that does this automatically. Since the tool accesses both poe.ninja's and GGG's API, it"
-             " should continue to work unless there are some game-breaking changes (which I will work around anyways).")
+    st.write('''
+            **Hey, exile!** Welcome to this tool. I have hated the process of going through poe.ninja manually to
+            find suitable skill gems, which is why I've decided to create a small tool that does this automatically.
+            Since the tool accesses both poe.ninja's and GGG's API, it should continue to work unless there are
+            some game-breaking changes.
+            ''')
 
-    st.subheader("1: Set your Constraints:")
+    st.markdown("---")
+    st.subheader("1: Set your Preferences:")
 
-    colfirst, ph1, colsecond, ph2 = st.columns([2, 1, 3, 3])
+    # Settings
+    colfirst, ph1, colsecond, ph2, colthird, ph3, colfourth = st.columns([2, 0.5, 2, 0.5, 2, 0.5, 2])
+
     with colfirst:
-        low_conf = st.checkbox(label="Hide Low Confidence", value=True)
-        nr_conf = st.number_input('Set low confidence threshold here:', min_value=0, value=30)
+        st.caption("Gems to hide:")
+        hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=DEFAULT_SETTINGS["hide_corrupted"])
+        hide_quality_gems = st.checkbox(label="Hide Gems with Quality", value=DEFAULT_SETTINGS["hide_quality"])
+        low_conf = st.checkbox(label="Hide Low Confidence", value=DEFAULT_SETTINGS["hide_low_confidence"])
+        nr_conf = st.number_input('Low Confidence Threshold (No. of Listings):', min_value=0, value=DEFAULT_SETTINGS["low_confidence_threshold"])
+
     with colsecond:
-        hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=True)
-        hide_quality_gems = st.checkbox(label="Hide Gems with Quality", value=False)
+        st.caption("Gem colors to show:")
+        green = st.checkbox('Green Gems (Dexterity)', value=DEFAULT_SETTINGS["show_gem_color_green"])
+        red = st.checkbox('Red Gems (Strength)', value=DEFAULT_SETTINGS["show_gem_color_red"])
+        blue = st.checkbox('Blue Gems (Intelligence)', value=DEFAULT_SETTINGS["show_gem_color_blue"])
+        gem_colors = [green, red, blue]
 
-    st.write("_Info: The tables automatically update._\n")
+    with colthird:
+        st.caption("Gem types to show:")
+        alt_gems = st.checkbox('Alt. Gems (Phantasmal etc.)', value=DEFAULT_SETTINGS["show_gem_type_alt"])
+        awakened = st.checkbox('Awakened Gems', value=DEFAULT_SETTINGS["show_gem_type_awk"])
+        exceptional = st.checkbox('Exceptional Gems (Enlighten etc.)', value=DEFAULT_SETTINGS["show_gem_type_exc"])
+        gem_types = [alt_gems, awakened, exceptional]
 
+    with colfourth:
+        st.caption("Minimum values:")
+        min_roi = st.slider('Minimum Return on Investment (RoI):',
+                            value=DEFAULT_SETTINGS["default_min_roi"],
+                            min_value=0,
+                            max_value=100,
+                            step=1)
+        min_c = st.slider('Minimum Buy-In (Chaos Orbs):',
+                          min_value=DEFAULT_SETTINGS["default_min_chaos"],
+                          value=0,
+                          max_value=100,
+                          step=1)
+
+    st.write("_The tables updates automatically after changes._\n")
+
+    st.markdown("---")
     st.subheader("2: Check the Results:")
+
     tab1, tab2 = st.tabs(["💰 Results Sorted by Margin / Rel. XP", "💸 Results Sorted by Return of Investment"])
     with tab1:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
-                             hide_qual=hide_quality_gems, mode="margin_rel")
+                             hide_qual=hide_quality_gems, gem_colors=gem_colors, gem_types=gem_types, min_c=min_c,
+                             min_roi=min_roi, mode="margin_rel")
     with tab2:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
-                             hide_qual=hide_quality_gems, mode="roi")
+                             hide_qual=hide_quality_gems, gem_colors=gem_colors, gem_types=gem_types, min_c=min_c,
+                             min_roi=min_roi, mode="roi")
 
     LEAGUE = dh.load_league()
     LAST_UPDATE = dh.last_update()
     DIV_PRICE = dh.load_divine_price()
-    st.empty()
+
     league_info = f"Data from poe.ninja for league \'{LEAGUE}\' from {LAST_UPDATE} GMT+2. Current divine price is {DIV_PRICE} C."
     st.caption(league_info)
-    st.empty()
+
     create_FAQ()
-    st.empty()
+
     create_changelog()
 
 
@@ -72,18 +124,37 @@ def swap_df_columns(df, col1, col2):
     return df
 
 
-def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, mode):
+def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_colors, gem_types, min_roi, min_c, mode):
+    # various filters
+    # filter: low confidence
     if hide_conf:
         df_top10 = df[df["listing_count"] >= nr_conf]
     else:
         df_top10 = df
 
+    # filter: corrupted gems
     if hide_corr:
         df_top10 = df_top10[df_top10["corrupted"] == 0]
 
+    # filter: gem quality =! 0
     if hide_qual:
         df_top10 = df_top10[df_top10["gemQuality"] == 0]
 
+    # filter: gem colors
+    # gem_colors = [green, red, blue]
+    df_top10 = drop_gem_colors(df_top10, green=gem_colors[0], red=gem_colors[1], blue=gem_colors[2])
+
+    # filter: gem type
+    # gem_types = [alt_gems, awakened, exceptional]
+    df_top10 = drop_gem_types(df_top10, alt_gem=gem_types[0], awaken=gem_types[1], exception=gem_types[2])
+
+    # filter: buy-in c
+    df_top10 = df_top10[df_top10["buy_c"] >= min_c]
+
+    # filter: roi
+    df_top10 = df_top10[df_top10["listing_count"] >= min_roi]
+
+    # show only the 10 best results
     if mode == "margin":
         df_top10 = df_top10.nlargest(10, "margin_divine", keep="first")
     elif mode == "margin_rel":
@@ -185,7 +256,20 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, mode):
 #     st.table(df_top10)
 
 
-def drop_special_gems(df, alt_gem, awaken, exception):
+def drop_gem_colors(df, green, red, blue):
+    """
+    This function drops all gem colors that are not ticket in the settings section.
+    """
+    if not green:
+        df = df[df["gem_color"] != "green"]
+    if not red:
+        df = df[df["gem_color"] != "red"]
+    if not blue:
+        df = df[df["gem_color"] != "blue"]
+    return df
+
+
+def drop_gem_types(df, alt_gem, awaken, exception):
     if not alt_gem:
         df = df[df["name"].str.contains("Phantasmal") == False]
         df = df[df["name"].str.contains("Divergent") == False]
@@ -323,6 +407,9 @@ def create_rawdata(df):
 def create_FAQ():
     with st.expander("FAQ (click me)"):
         st.write("""
+            - **General**
+            **Why are there so many gems that start from level 16?** This is because poe.ninja's API returns many gems
+            as such. 
             - **Setup** \n
             **Why hide low confidence?** Because PoE.ninja considers a count smaller than 10 to be "low evidence" 
             which you should do as well. \n
@@ -354,7 +441,9 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
-            **Version 1.0.0** \n
+            **Version 1.0.0** (7th of September, 2022) \n
+            - Fixed a bug where gems weren't flagged with their actual gem color
+            - Added a lot more settings to the settings part (gem colors/types, min values) 
             - Included both tables into tabs for better navigation
             - Added skill gem icons and buy (chaos) to the tables for better orientation 
             - Reworked the FAQ and added a lot more information to it
@@ -411,14 +500,16 @@ def load_data():
 
 
 def settings():
+    img = Image.open("utility/favicon.ico")
     st.set_page_config(
-        page_title="PoE Academy's Gem Workshop",
+        page_title="Skill Gem Leveling Helper by PoE Academy",
+        page_icon=img,
         layout="wide",
         initial_sidebar_state="expanded",
         menu_items={
             'Get Help': 'https://discord.com/channels/827836172184584214/981558870507929648',
             'Report a bug': "https://discord.com/channels/827836172184584214/981558870507929648",
-            'About': "This app was made to help choosing the right gems to level in Path of Exile for profit."
+            'About': "This app was made to help choosing the right gems to level for profit in Path of Exile."
         }
     )
 
