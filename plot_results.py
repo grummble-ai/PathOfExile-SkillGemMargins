@@ -5,6 +5,7 @@ import data_handler as dh
 import streamlit.components.v1 as components
 
 VERSION = "v1.0.0"
+DISCORD_URL = 'htttps://'
 
 #TODO: Finish settings and add button to site that can restore default settings // Could be done with sessionstate
 DEFAULT_SETTINGS = {
@@ -36,6 +37,14 @@ def create_top(df):
             Since the tool accesses both poe.ninja's and GGG's API, it should continue to work unless there are
             some game-breaking changes.
             ''')
+
+    # with st.form("my_form"):
+    #     title = st.text_input('Your feedback:')
+    #
+    #     # Every form must have a submit button.
+    #     submitted = st.form_submit_button("Submit")
+    #     if submitted:
+    #         st.write("slider", title)
 
     st.markdown("---")
     st.subheader("1: Set your Preferences:")
@@ -80,7 +89,7 @@ def create_top(df):
     st.write("_The tables updates automatically after changes._\n")
 
     st.markdown("---")
-    st.subheader("2: Check the Results:")
+    st.subheader("2: Check the Best Results:")
 
     tab1, tab2 = st.tabs(["💰 Results Sorted by Margin / Rel. XP", "💸 Results Sorted by Return of Investment"])
     with tab1:
@@ -475,7 +484,7 @@ def create_sidebar():
     # side bar
     try:
         st.sidebar.write("This is a project made by **PoE Academy**. You may already be familiar with my YT logo:")
-        st.sidebar.image("logo_with_bg_transparent.png", width=150)
+        st.sidebar.image("logo_v2.0.png", width=150)
     except:
         st.sidebar.write("This is a project made by PoE Academy. You may already know me from my YT videos.")
 
