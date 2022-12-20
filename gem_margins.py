@@ -1,5 +1,8 @@
 import pandas as pd
+
+import data_handler
 import data_handler as dh
+from data_handler import load_league
 
 pd.options.mode.chained_assignment = None
 
@@ -203,7 +206,80 @@ def remove_low_confidence(df, list_cnt):
     return df_conf
 
 
-def calculate_margins():
+def create_query_url(LEAGUE:str, name:str, skill:str, type_qual:str, corr:str):
+    # create the name string, format: %22Awakened%20Multistrike%20Support%22 (does not add %20 if only single word!
+    if type_qual == "Anomalous" or "Divergent" or "Phantasmal":
+        skill_name = skill
+        # anomalous: %22gem_alternate_quality%22:{%22option%22:%221%22},
+        # phantasmal: %22gem_alternate_quality%22:{%22option%22:%223%22},
+        # divergent: %22gem_alternate_quality%22:{%22option%22:%222%22},
+        if type_qual == "Anomalous":
+            alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%221%22},"
+        elif type_qual == "Phantasmal":
+            alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%223%22},"
+        elif type_qual == "Divergent":
+            alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%222%22},"
+        else:
+            alternate_qual = ""
+
+    else:
+        alternate_qual = ""
+        skill_name = name
+
+    name_str = "%22" + skill_name.replace(" ", "%20") + "%22"
+
+    query_url = (
+        f"https://www.pathofexile.com/trade/search/{LEAGUE}?q={{"
+        "%22query%22:{%22filters%22:{%22misc_filters%22:{%22filters%22:{"
+        f"%22gem_level%22:{{%22min%22:1}},{alternate_qual}%22corrupted%22:{{%22option%22:{corr}}},%22quality%22:{{%22min%22:0}}"
+        f"}}}}}},%22type%22:{name_str}}}}}"
+    )
+    return query_url
+
+
+def create_query_html(query_url:str):
+    # query_html = fr"<a href={query_url} Buy</a>"
+    query_html = f"""<a class="button" target="_blank" title="Buy on pathofexile.com/trade" href={query_url} role="button" data-variant="round" data-size="small" style="font-family: "Source Sans Pro", sans-serif; color: rgb(255, 75, 75);">Trade <svg aria-hidden="true" data-prefix="fas" data-icon="exchange-alt" class="icon-exchange-alt-solid_svg__svg-inline--fa icon-exchange-alt-solid_svg__fa-exchange-alt icon-exchange-alt-solid_svg__fa-w-16" viewBox="0 0 512 512" width="1em" height="1em"><path fill="currentColor" d="M0 168v-16c0-13.255 10.745-24 24-24h360V80c0-21.367 25.899-32.042 40.971-16.971l80 80c9.372 9.373 9.372 24.569 0 33.941l-80 80C409.956 271.982 384 261.456 384 240v-48H24c-13.255 0-24-10.745-24-24zm488 152H128v-48c0-21.314-25.862-32.08-40.971-16.971l-80 80c-9.372 9.373-9.372 24.569 0 33.941l80 80C102.057 463.997 128 453.437 128 432v-48h360c13.255 0 24-10.745 24-24v-16c0-13.255-10.745-24-24-24z"></path></svg></a>"""
+    return query_html
+
+
+def add_search_url(df):
+    LEAGUE = data_handler.load_league()
+
+    unique_names = df.drop_duplicates(subset="name")
+    names = unique_names["name"].tolist()
+
+    # create a new dataframe with all columns that will be filled using the loop below
+    df_urls_added = df[0:0]
+
+    for idx, gems in enumerate(names):
+        # iterate trough every gem in the gem list (e.g. Lightning Strike, Hatred, ...)
+        df_ = df[df['name'] == gems]
+
+        # iterate through every single gem entry for a give gem (e.g. 8/0, 16/0 and 20/20 for Lightning Strike)
+        for i in range(df_.shape[0]):
+            df_gem = df_.iloc[[i]]
+
+            # get the gem quality, gemlevel name and quality type
+            name = df_gem["name"].values[0]
+            skill = df_gem["skill"].values[0]
+            type_qual = df_gem["qualityType"].values[0]
+
+            # create the query url from gem info
+            url = create_query_url(LEAGUE, name, skill, type_qual, corr="false")
+            df_gem["query_url"] = url
+
+            # create the query html from query url
+            html = create_query_html(url)
+            df_gem["query_html"] = html
+
+            # append the resulting dataframe
+            df_urls_added = pd.concat([df_urls_added, df_gem], ignore_index=True)
+
+    return df_urls_added
+
+
+def create_json_data():
     dict_cur = dh.load_raw_dict(type="Currency")
     data_cur = pd.DataFrame.from_dict(dict_cur, orient="index")
     dict_gem = dh.load_raw_dict(type="Gems")
@@ -233,6 +309,8 @@ def calculate_margins():
     df["roi"] = ""
     df["ranking_from_roi"] = ""
     df["gem_color"] = ""
+    df["query_url"] = ""
+    df["query_html"] = ""
 
     df = add_gem_types(df)
 
@@ -243,6 +321,8 @@ def calculate_margins():
     df = calculate_margin_per_xp_and_ranking(df)
 
     df = add_gem_colors(df)
+
+    df = add_search_url(df)
 
     gems_analyzed = df.to_dict(orient="index")
     dh.save_json(gems_analyzed)

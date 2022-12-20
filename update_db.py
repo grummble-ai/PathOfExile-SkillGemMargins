@@ -5,4 +5,4 @@ import gem_margins
 data_handler.load_all_categories()
 
 # create the df from poe.ninja data
-gem_margins.calculate_margins()
+gem_margins.create_json_data()

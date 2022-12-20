@@ -4,8 +4,7 @@ import pandas as pd
 import data_handler as dh
 import streamlit.components.v1 as components
 
-VERSION = "v1.0.0"
-DISCORD_URL = 'htttps://'
+VERSION = "v1.1.0"
 
 #TODO: Finish settings and add button to site that can restore default settings // Could be done with sessionstate
 DEFAULT_SETTINGS = {
@@ -86,17 +85,21 @@ def create_top(df):
                           max_value=100,
                           step=1)
 
-    st.write("_The tables updates automatically after changes._\n")
+    st.write("_The table below updates automatically after changes._\n")
 
     st.markdown("---")
     st.subheader("2: Check the Best Results:")
 
-    tab1, tab2 = st.tabs(["💰 Results Sorted by Margin / Rel. XP", "💸 Results Sorted by Return of Investment"])
+    tab1, tab2, tab3 = st.tabs(["💰 Results Sorted by Margin / Rel. XP", "💎 Results Sorted by Margin", "💸 Results Sorted by Return of Investment"])
     with tab1:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
                              hide_qual=hide_quality_gems, gem_colors=gem_colors, gem_types=gem_types, min_c=min_c,
                              min_roi=min_roi, mode="margin_rel")
     with tab2:
+        create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
+                             hide_qual=hide_quality_gems, gem_colors=gem_colors, gem_types=gem_types, min_c=min_c,
+                             min_roi=min_roi, mode="margin")
+    with tab3:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
                              hide_qual=hide_quality_gems, gem_colors=gem_colors, gem_types=gem_types, min_c=min_c,
                              min_roi=min_roi, mode="roi")
@@ -119,7 +122,6 @@ def path_to_image_html(path):
 
 
 def convert_df(input_df):
-    # IMPORTANT: Cache the conversion to prevent computation on every rerun
     html = input_df.to_html(escape=False, formatters=dict(Icon=path_to_image_html), index=False)
     html_title_centered = html.replace('<th>', '<th align="center">')
     return html_title_centered
@@ -131,6 +133,21 @@ def swap_df_columns(df, col1, col2):
     col_list[y], col_list[x] = col_list[x], col_list[y]
     df = df[col_list]
     return df
+
+
+def column_title_link_to_html(type:str, text:str):
+    img_left = '<img src="'
+    img_right = '" width="25" >'
+    img_chaos = "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1"
+    img_divine = "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lNb2RWYWx1ZXMiLCJ3IjoxLCJoIjoxLCJzY2FsZSI6MX1d/e1a54ff97d/CurrencyModValues.png"
+    if type == "chaos":
+        html = text + " " + img_left + img_chaos + img_right
+    elif type == "divine":
+        html = text + " " + img_left + img_divine + img_right
+    else:
+        Exception(ValueError(f"Type {type} not recognized. Please use chaos or divine."))
+
+    return html
 
 
 def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_colors, gem_types, min_roi, min_c, mode):
@@ -175,8 +192,8 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
 
     # drop unnecessary columns
     df_top10 = df_top10.drop(["value_chaos", "value_divine", "created", "datetime", "corrupted", "qualityType",
-                              "skill", "gemQuality", "gem_type", "gemLevel", "levelRequired", "gem_level_base",
-                              "gem_quality_base", "sell_c", "margin_c", "gem_color", "ranking_from_roi",
+                              "skill", "gemQuality", "gem_type", "gemLevel", "levelRequired", "query_url", "gem_level_base",
+                              "gem_quality_base", "margin_c", "gem_color", "ranking_from_roi",
                               "ranking_from_margin_gem_specific"], axis=1)
 
     truncate_list = ["buy_divine", "sell_divine", "margin_divine", "margin_gem_specific", "roi"]
@@ -186,83 +203,28 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
     # reindex icon url and name to show the icon first
     df_top10 = swap_df_columns(df_top10, "name", "icon_url")
 
+    chaos_test = 'Buy <img src="' + "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1" + '" width="25" >'
+
     df_top10 = df_top10.rename(columns={"name": "Skill Gem",
                                         "icon_url": "Icon",
-                                        "buy_c": "Buy (Chaos)",
+                                        "buy_c": column_title_link_to_html("chaos", "Buy"),
+                                        "sell_c": column_title_link_to_html("chaos", "Sell"),
                                         "upgrade_path": "Upgrade Path",
-                                        "buy_divine": "Buy (Divine)",
-                                        "sell_divine": "Sell (Divine)",
-                                        "margin_divine": "Margin (Divine)",
+                                        "buy_divine": column_title_link_to_html("divine", "Buy"),
+                                        "sell_divine": column_title_link_to_html("divine", "Sell"),
+                                        "margin_divine": column_title_link_to_html("divine", "Margin"),
                                         "margin_gem_specific": "Margin / Rel. XP",
                                         # "average_returns_ex": "Average Returns (Ex)",
                                         "roi": "RoI",
-                                        "listing_count": "No. Trade Listings"
+                                        "listing_count": "No. Listings",
+                                        "query_html": "Link"
                                         })
-
-    if mode == "margin":
-        df_top10 = df_top10.rename(columns={"Margin (Divine)": "Margin (Divine) ▼"})
-    elif mode == "margin_rel":
-        df_top10 = df_top10.rename(columns={"Margin / Rel. XP": "Margin / Rel. XP ▼"})
-    elif mode == "roi":
-        df_top10 = df_top10.rename(columns={"RoI": "RoI ▼"})
 
     html = convert_df(df_top10)
     st.markdown(
         html,
         unsafe_allow_html=True
     )
-
-
-# def create_top_table(df, hide_conf, nr_conf, hide_corr, hide_qual, mode):
-#     if mode == "margin":
-#         st.subheader("... by Margin")
-#     elif mode == "roi":
-#         st.subheader("... by Return of Investment")
-#     else:
-#         ValueError("Choose appropriate Top 10 table settings.")
-#
-#     if hide_conf:
-#         df_top10 = df[df["listing_count"] >= nr_conf]
-#     else:
-#         df_top10 = df
-#
-#     if hide_corr:
-#         df_top10 = df_top10[df_top10["corrupted"] == 0]
-#
-#     if hide_qual:
-#         df_top10 = df_top10[df_top10["gemQuality"] == 0]
-#
-#     if mode == "margin":
-#         # grab the 10 best gems to level by margin
-#         df_top10 = df_top10.nsmallest(10, "ranking_from_margin_gem_specific", keep="first")
-#     elif mode == "roi":
-#         # grab the 10 best gems to level by roi
-#         df_top10 = df_top10.nsmallest(10, "ranking_from_roi", keep="first")
-#
-#     # drop unnecessary columns
-#     df_top10 = df_top10.drop(["value_chaos", "value_divine", "created", "datetime", "corrupted", "qualityType",
-#                               "skill", "gemQuality", "gem_type", "gemLevel", "levelRequired", "gem_level_base",
-#                               "gem_quality_base",
-#                               "icon_url", "buy_c", "sell_c", "margin_c", "gem_color", "ranking_from_roi",
-#                               "ranking_from_margin_gem_specific"], axis=1)
-#
-#     df_top10 = df_top10.rename(columns={"name": "Skill Gem",
-#                                         "upgrade_path": "Upgrade Path",
-#                                         "buy_divine": "Buy (Divine)",
-#                                         "sell_divine": "Sell (Divine)",
-#                                         "margin_divine": "Margin (Divine)",
-#                                         "margin_gem_specific": "Margin / Rel. Exp.",
-#                                         # "average_returns_ex": "Average Returns (Ex)",
-#                                         "roi": "RoI",
-#                                         "listing_count": "No. Trade Listings"
-#                                         })
-#
-#     if mode == "margin":
-#         df_top10 = df_top10.rename(columns={"Margin / Rel. Exp.": "Margin / Rel. Exp. ▼"})
-#     elif mode == "roi":
-#         df_top10 = df_top10.rename(columns={"RoI": "RoI ▼"})
-#
-#     st.table(df_top10)
 
 
 def drop_gem_colors(df, green, red, blue):
@@ -293,117 +255,6 @@ def drop_gem_types(df, alt_gem, awaken, exception):
         df = df[df["name"].str.contains("Enhance") == False]
 
     return df
-
-
-# def create_plot(df):
-#     # ui elements
-#     st.header('Want to dig into the data yourself?')
-#
-#     # input elements
-#     col3, colx, col4 = st.columns([3, 1, 5])
-#
-#     with col3:
-#         st.subheader("Settings")
-#         input_min_roi = st.slider('Minimum Return on Investment:',
-#                                   value=10,
-#                                   min_value=0,
-#                                   max_value=100,
-#                                   step=1)
-#         input_buyin = st.slider('Minimum Buy-In (Chaos Orbs):',
-#                                 min_value=0,
-#                                 value=0,
-#                                 max_value=100,
-#                                 step=1)
-#         input_min_listings = st.number_input('Minimum No. of Listing on Trade:',
-#                                              min_value=0,
-#                                              value=10,
-#                                              step=1,
-#                                              format="%d")
-#         st.caption("What gem colors to show:")
-#         green = st.checkbox('Green Gems (Dexterity)', value=True)
-#         red = st.checkbox('Red Gems (Strength)', value=True)
-#         blue = st.checkbox('Blue Gems (Intelligence)', value=True)
-#
-#         st.caption("What special gems to show:")
-#         alt_gems = st.checkbox('Alt. Gems (Phantasmal etc.)', value=True)
-#         awakened = st.checkbox('Awakened Gems', value=True)
-#         exceptional = st.checkbox('Exceptional Gems (Enlighten etc.)', value=True)
-#
-#     with col4:
-#         st.subheader("Hover the graph for more info")
-#         # filter as specified in the input
-#         df_ = df[df["roi"] >= input_min_roi]
-#         df_ = df_[df_["buy_c"] >= input_buyin]
-#         df_ = df_[df_["listing_count"] >= input_min_listings]
-#         if not green:
-#             df_ = df_[df_["gem_color"] != "green"]
-#         if not red:
-#             df_ = df_[df_["gem_color"] != "red"]
-#         if not blue:
-#             df_ = df_[df_["gem_color"] != "blue"]
-#
-#         df_ = drop_special_gems(df_, alt_gem=alt_gems, awaken=awakened, exception=exceptional)
-#
-#         # workaround to make roi_gem_norm numeric (bug with plotly)
-#         size = pd.to_numeric(df_.roi)
-#
-#         if df_.shape[0] < 15:
-#             fig = px.scatter(df_,
-#                              x="buy_c",
-#                              y="margin_c",
-#                              size=size,
-#                              text="name",
-#                              color="gem_color",
-#                              color_discrete_map={"blue": "rgba(112, 112, 255, 0.8)",
-#                                                  "green": "rgba(112, 255, 112, 0.8)",
-#                                                  "red": "rgba(224, 80, 48, 0.8)",
-#                                                  "white": "rgba(255, 255, 255, 0.8)"},
-#                              labels={
-#                                  "margin_c": "Margin (Chaos Orbs)",
-#                                  "buy_c": "Buying Price (Chaos Orbs)",
-#                                  "gem_color": "Gem Color"
-#                              },
-#                              hover_data=["name",
-#                                          "margin_divine",
-#                                          "margin_gem_specific",
-#                                          "roi"
-#                                          ],
-#                              log_x=True,
-#                              log_y=True,
-#                              )
-#             fig.update_traces(textposition='middle right')
-#             fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-#
-#         else:
-#             fig = px.scatter(df_,
-#                              x="buy_c",
-#                              y="margin_c",
-#                              size=size,
-#                              # text="name",
-#                              color="gem_color",
-#                              color_discrete_map={"blue": "rgba(112, 112, 255, 0.8)",
-#                                                  "green": "rgba(112, 255, 112, 0.8)",
-#                                                  "red": "rgba(224, 80, 48, 0.8)",
-#                                                  "white": "rgba(255, 255, 255, 0.8)"},
-#                              labels={
-#                                  "margin_c": "Margin (Chaos Orbs)",
-#                                  "buy_c": "Buying Price (Chaos Orbs)",
-#                                  "gem_color": "Gem Color"
-#                              },
-#                              hover_data=["name",
-#                                          "margin_divine",
-#                                          "margin_gem_specific",
-#                                          "roi"
-#                                          ],
-#                              log_x=True,
-#                              log_y=True,
-#                              )
-#
-#         st.caption("Margin vs. Buying Price plot. Marker size indicates the RoI. Logarithmic scale.")
-#         st.plotly_chart(fig, use_container_width=True)
-#
-#     st.empty()
-#     st.markdown("---")
 
 
 @st.cache
@@ -444,12 +295,23 @@ def create_FAQ():
             is divided by 684.009.294 / 1.920.762.677 = 0.3428 to account for faster leveling of the regular gem, i.e.,
             increasing the margin of the regular gem compared to an awakened gem. \n
             **RoI?** - Return on Investment; RoI = (Selling price - Buying Price) / Buying Price \n
+            - **Ideas for potential improvements:**
+            - Gems you buy at level 1-19 should be considered level 1.
+            - Gems at 1-19 quality should be set at 0 quality, it doesn't matter if you'll flip the gem anyways
+            - For exeptional and awakened gems, missing quality should add 1c/qual% to the gem cost, since you'll pay for gcps yourself later on
+            - Consider the price of GCPs for the vendor recipe for regular gems
+            - Add a tab with historical data 
         """)
 
 
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 1.1.0** (20th of December, 2022) \n
+            - Added chaos orb and divine orb icons to some column titles 
+            - Added trade links to the gems
+            - Streamlit 1.16.0
+            - Added Margin as an option to main window
             **Version 1.0.0** (7th of September, 2022) \n
             - Fixed a bug where gems weren't flagged with their actual gem color
             - Added a lot more settings to the settings part (gem colors/types, min values) 
