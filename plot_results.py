@@ -296,12 +296,12 @@ def create_FAQ():
             increasing the margin of the regular gem compared to an awakened gem. \n
             **RoI?** - Return on Investment; RoI = (Selling price - Buying Price) / Buying Price \n
             - **Ideas for potential improvements:**
-            Gems you buy at level 1-19 should be considered level 1.
-            Gems at 1-19 quality should be set at 0 quality, it doesn't matter if you'll flip the gem anyways
-            For exeptional and awakened gems, missing quality should add 1c/qual% to the gem cost, since you'll pay for gcps yourself later on
-            Consider the price of GCPs for the vendor recipe for regular gems
-            Add a tab with historical data 
-            Possibility to enter your character's base attributes to filter out gems that your character cannot wear 
+            Gems you buy at level 1-19 should be considered level 1. \n
+            Gems at 1-19 quality should be set at 0 quality, it doesn't matter if you'll flip the gem anyways\n
+            For exeptional and awakened gems, missing quality should add 1c/qual% to the gem cost, since you'll pay for gcps yourself later on \n
+            Consider the price of GCPs for the vendor recipe for regular gems \n
+            Add a tab with historical data \n
+            Possibility to enter your character's base attributes to filter out gems that your character cannot wear \n
         """)
 
 
