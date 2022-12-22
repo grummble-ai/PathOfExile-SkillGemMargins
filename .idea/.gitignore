@@ -1,3 +1,6 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+secrets.toml
+firestore-key.json
+key-to-toml.py

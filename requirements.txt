@@ -4,3 +4,6 @@ pandas==1.4.1
 DateTime==4.4
 openpyxl==3.0.9
 Pillow==9.1.1
+toml==0.10.2
+firebase-admin==6.0.1
+google-cloud-firestore==2.7.3

@@ -1,12 +1,17 @@
+import datetime
 import streamlit as st
 from PIL import Image
 import pandas as pd
 import data_handler as dh
 import streamlit.components.v1 as components
+import db_operations
+
+# create connection to firebase and add another viewer to it
+db, viewer_id = db_operations.create_db_connection()
 
 VERSION = "v1.1.0"
 
-#TODO: Finish settings and add button to site that can restore default settings // Could be done with sessionstate
+# TODO: Finish settings and add button to site that can restore default settings // Could be done with sessionstate
 DEFAULT_SETTINGS = {
     "hide_corrupted": True,
     "hide_quality": False,
@@ -22,6 +27,7 @@ DEFAULT_SETTINGS = {
     "default_min_chaos": 0,
 }
 
+
 # ToDo: going from 0 quality to 20 quality means flipping the gem, in practice, and should add xp needed equivalent to 1->20 the gem
 # ToDo: Gems you buy at level 1-19 should be considered level 1. It changes almost nothing, but would cull potential duplicates. Also, would induce less confusion for all alt qual gems being level 16
 # ToDo: Gems at 1-19 quality should be set at 0 quality, it doesn't matter if you'll flip the gem anyways
@@ -29,6 +35,10 @@ DEFAULT_SETTINGS = {
 
 
 def create_top(df):
+    # add one to firebase db whenever the tables are refreshed
+    db_operations.update_field_of_document(db, u"actions", u"refreshed", viewer_id, st.session_state.actions)
+    st.session_state.actions += 1
+
     st.title(f"PoE Academy's Skill Gem Leveling Helper {VERSION}")
     st.write('''
             **Hey, exile!** Welcome to this tool. I have hated the process of going through poe.ninja manually to
@@ -36,14 +46,6 @@ def create_top(df):
             Since the tool accesses both poe.ninja's and GGG's API, it should continue to work unless there are
             some game-breaking changes.
             ''')
-
-    # with st.form("my_form"):
-    #     title = st.text_input('Your feedback:')
-    #
-    #     # Every form must have a submit button.
-    #     submitted = st.form_submit_button("Submit")
-    #     if submitted:
-    #         st.write("slider", title)
 
     st.markdown("---")
     st.subheader("1: Set your Preferences:")
@@ -56,7 +58,8 @@ def create_top(df):
         hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=DEFAULT_SETTINGS["hide_corrupted"])
         hide_quality_gems = st.checkbox(label="Hide Gems with Quality", value=DEFAULT_SETTINGS["hide_quality"])
         low_conf = st.checkbox(label="Hide Low Confidence", value=DEFAULT_SETTINGS["hide_low_confidence"])
-        nr_conf = st.number_input('Low Confidence Threshold (No. of Listings):', min_value=0, value=DEFAULT_SETTINGS["low_confidence_threshold"])
+        nr_conf = st.number_input('Low Confidence Threshold (No. of Listings):', min_value=0,
+                                  value=DEFAULT_SETTINGS["low_confidence_threshold"])
 
     with colsecond:
         st.caption("Gem colors to show:")
@@ -90,7 +93,8 @@ def create_top(df):
     st.markdown("---")
     st.subheader("2: Check the Best Results:")
 
-    tab1, tab2, tab3 = st.tabs(["💰 Results Sorted by Margin / Rel. XP", "💎 Results Sorted by Margin", "💸 Results Sorted by Return of Investment"])
+    tab1, tab2, tab3 = st.tabs(["💰 Results Sorted by Margin / Rel. XP", "💎 Results Sorted by Margin",
+                                "💸 Results Sorted by Return of Investment"])
     with tab1:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
                              hide_qual=hide_quality_gems, gem_colors=gem_colors, gem_types=gem_types, min_c=min_c,
@@ -135,7 +139,7 @@ def swap_df_columns(df, col1, col2):
     return df
 
 
-def column_title_link_to_html(type:str, text:str):
+def column_title_link_to_html(type: str, text: str):
     img_left = '<img src="'
     img_right = '" width="25" >'
     img_chaos = "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1"
@@ -192,7 +196,8 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
 
     # drop unnecessary columns
     df_top10 = df_top10.drop(["value_chaos", "value_divine", "created", "datetime", "corrupted", "qualityType",
-                              "skill", "gemQuality", "gem_type", "gemLevel", "levelRequired", "query_url", "gem_level_base",
+                              "skill", "gemQuality", "gem_type", "gemLevel", "levelRequired", "query_url",
+                              "gem_level_base",
                               "gem_quality_base", "margin_c", "gem_color", "ranking_from_roi",
                               "ranking_from_margin_gem_specific"], axis=1)
 
@@ -313,6 +318,7 @@ def create_changelog():
             - Added trade links to the gems
             - Streamlit 1.16.0
             - Added Margin as an option to main window
+            - Very basic analytics added: a counter goes up when anyone opens the app, and whenever the table is refreshed; no personal data is used at all
             **Version 1.0.0** (7th of September, 2022) \n
             - Fixed a bug where gems weren't flagged with their actual gem color
             - Added a lot more settings to the settings part (gem colors/types, min values) 
@@ -388,6 +394,9 @@ def settings():
 
 # @st.cache
 def create_site():
+    if 'actions' not in st.session_state:
+        st.session_state.actions = 0
+
     settings()
 
     df = load_data()
