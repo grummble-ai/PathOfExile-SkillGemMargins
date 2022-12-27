@@ -53,6 +53,13 @@ def add_action_to_db(db, viewer_id:int, document:str):
                                  field=u"number",
                                  id=viewer_id,
                                  val=st.session_state.actions_toolbox)
+    elif document == "actions_sextants":
+        st.session_state.actions_toolbox += 1
+        update_field_of_document(db,
+                                 document=document,
+                                 field=u"number",
+                                 id=viewer_id,
+                                 val=st.session_state.actions_toolbox)
     else:
         ValueError("Provide a suitable firestore document name.")
 

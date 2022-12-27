@@ -1,7 +1,7 @@
 import os
 
 import pandas as pd
-import data_handler as dh
+import skillgems_data_handler as dh
 from os import path
 
 pd.options.mode.chained_assignment = None

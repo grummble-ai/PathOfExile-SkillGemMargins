@@ -1,4 +1,4 @@
-import data_handler as data_handler
+import skillgems_data_handler as data_handler
 import gem_margins as gem_margins
 
 # # get data from poe.ninja and save to db

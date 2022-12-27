@@ -5,9 +5,9 @@ import streamlit.components.v1 as components
 def create_sidebar():
     # side bar
     try:
-        st.sidebar.write("This is a project made by **PoE Academy** and is not affiliated with GGG in any way. "
+        st.sidebar.write("This is a side-project made by **PoE Academy** which is not affiliated with GGG in any way. "
                          "You may already be familiar with my YT logo:")
-        st.sidebar.image("logo_v2.0.png", width=120)
+        st.sidebar.image("logo_v2.0.png", width=100)
     except:
         st.sidebar.write("This is a project made by PoE Academy. You may already know me from my YT videos.")
 

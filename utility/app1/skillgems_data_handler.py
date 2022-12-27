@@ -244,7 +244,7 @@ def request_current_league():
             f.write(current_league)
 
 
-def get_path(filename, **kwargs):
+def get_path(filename:str, **kwargs):
     subfolder = kwargs.get('subf', None)
     if subfolder:
         path_cur = os.path.abspath(cwd)
@@ -333,7 +333,7 @@ def load_raw_dict(type: str):
 
 def save_json(data):
     path_data = get_path(filename="data.json", subf="app1")
-    with open(path_data, 'wt') as outfile:
+    with open(path_data, 'w+') as outfile:
         json.dump(data, outfile)
     path_history = get_path(filename='History.txt')
     with open(path_history, 'a') as record:
