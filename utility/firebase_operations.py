@@ -66,9 +66,13 @@ def add_action_to_db(db, viewer_id:int, document:str):
 
 def create_db_connection():
     # create database connection
-    key_dict = json.loads(st.secrets["textkey"])
-    cred = credentials.Certificate(key_dict)
-    app = firebase_admin.initialize_app(cred)
+    if not firebase_admin._apps:
+        key_dict = json.loads(st.secrets["textkey"])
+        cred = credentials.Certificate(key_dict)
+        app = firebase_admin.initialize_app(cred)
+    else:
+        app = firebase_admin.get_app()
+
     db = firestore.client()
 
     viewer_id = get_latest_id_from_document(db, u"views", u"number")
