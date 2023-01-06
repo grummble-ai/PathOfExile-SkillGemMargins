@@ -30,10 +30,10 @@ DEFAULT_SETTINGS = {
 
 
 def create_top(df):
-    # add one to firebase db whenever the tables are refreshed
-    add_action_to_db(st.session_state.db_connection,
-                     viewer_id=st.session_state.viewer_id,
-                     document=u"actions_skillgemleveling")
+    # # add one to firebase db whenever the tables are refreshed
+    # add_action_to_db(st.session_state.db_connection,
+    #                  viewer_id=st.session_state.viewer_id,
+    #                  document=u"actions_skillgemleveling")
 
     st.subheader("1: Set your Preferences:")
 

@@ -2,9 +2,9 @@ import streamlit as st
 from utility.firebase_operations import add_action_to_db
 import widgets.initializer as initializer
 
-add_action_to_db(st.session_state.db_connection,
-                 viewer_id=st.session_state.viewer_id,
-                 document=u"actions_toolbox")
+# add_action_to_db(st.session_state.db_connection,
+#                  viewer_id=st.session_state.viewer_id,
+#                  document=u"actions_toolbox")
 
 TITLE = "Path of Exile Tools You Should Be Using"
 SUBHEADER = '''
