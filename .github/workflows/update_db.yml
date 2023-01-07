@@ -28,8 +28,8 @@ jobs:
               pip install -r requirements.txt
           - name: execute python script # run the run.py to get the latest data
             run: |
-              python skillgems_update_db.py
-              python sextants_update_db.py
+              python ./.github/utility/app1/skillgems_update_db.py
+              python ./.github/utility/app2/sextants_update_db.py
               
           - name: Commit and Push Changes
             run: |
