@@ -6,7 +6,7 @@ name: Update_DB
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '00 01,13 * * *'
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -28,8 +28,8 @@ jobs:
               pip install -r requirements.txt
           - name: execute python script # run the run.py to get the latest data
             run: |
-              python ./.github/utility/app1/skillgems_update_db.py
-              python ./.github/utility/app2/sextants_update_db.py
+              python /utility/app1/skillgems_update_db.py
+              python /utility/app2/sextants_update_db.py
               
           - name: Commit and Push Changes
             run: |
