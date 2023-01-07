@@ -38,7 +38,7 @@ def create_table():
     st.session_state.df_sliced = df
 
     # remove unwanted columns
-    df = df_drop_column(df, ["Level", "Line0", "Line1", "Line2", "Line3", "Line4",
+    df = df_drop_column(df, ["Level", "Line0", "Line1", "Line2", "Line3", "Spalte1", "lowConfidence",
                                  "w_has_atlas_mission", "w_hall_of_grandmasters", "w_no_strongboxes",
                                  "w_unique_map", "w_no_monster_packs", "w_no_boss", "w_map_has_blight",
                                  "w_vault_of_atziri", "w_elder_occupied", "timestamp", "Item"])
@@ -52,7 +52,7 @@ def create_table():
                                 "w_default": "Weighting",
                                 "divine": st.session_state.html_divine,
                                 "chaos": st.session_state.html_chaos,
-                                "lowConfidence": "Low Confidence"})
+                                "lowConfidenceHTML": "Low Confidence"})
 
     st.session_state.html_table = convert_df_with_icon(df)
 
@@ -191,6 +191,9 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 0.9.2** (7th of January, 2023) \n
+            - Added line breaks to mod description
+            - Improvements to visual clarity in the table
             **Version 0.9.1** (7th of January, 2023) \n
             - Fixed timestamp bug
             **Version 0.9.0** (7th of January, 2023) \n

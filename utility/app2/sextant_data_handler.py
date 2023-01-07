@@ -16,6 +16,16 @@ def load_TFTdata_from_github():
     write_json(data=data, file_path=storage_path)
 
 
+def add_html_colors_to_confidence_val(df):
+    green = "#008000"
+    red = "#ff0000"
+    df = df.assign(lowConfidenceHTML=
+                   [f"<span style=\"color: {red}\">True</span>"
+                    if x else f"<span style=\"color: {green}\">False</span>"
+                    for x in df['lowConfidence']])
+    return df
+
+
 def save_mixed_data(df):
     storage_path = get_data_path(filename=SAVE_FILE_NAME, subf="app2")
     df.to_json(path_or_buf=storage_path)
@@ -29,8 +39,10 @@ def mix_sextant_info_and_tft_data():
     with open(path_data) as f:
         data_json = json.load(f)
     df_tft = pd.json_normalize(data_json, record_path=['data'], meta=['timestamp'])
-
+    # merge both dataframes (raw data and TFT info together)
     df = df_raw.merge(df_tft, on="name")
+    # exchange False and True with html spans including colors
+    df = add_html_colors_to_confidence_val(df)
     save_mixed_data(df)
 
 
