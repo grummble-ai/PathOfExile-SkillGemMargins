@@ -154,7 +154,7 @@ def create_part2():
     )
 
     st.caption(
-        f"PoE Ninja fetched on {timestamp_to_date(st.session_state.timestamp)}")
+        f"PoE Ninja and TFT fetched on {timestamp_to_date(st.session_state.timestamp)} GMT+2.")
 
 
 def create_FAQ():
@@ -191,6 +191,8 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 0.9.1** (7th of January, 2023) \n
+            - Fixed timestamp bug
             **Version 0.9.0** (7th of January, 2023) \n
             - Added the basic functionalities
         """)
@@ -258,7 +260,7 @@ def sessionstate_init():
 
 # create welcome page
 SUBHEADER = '''This tool is still being tested. Please report any bugs / feedback to me.'''
-VERSION = "0.9.0"
+VERSION = "0.9.1"
 initializer.create_boilerplate(pagetitle="Sextant Rolling Helper", version=VERSION, subheader=SUBHEADER)
 
 # initialize session state

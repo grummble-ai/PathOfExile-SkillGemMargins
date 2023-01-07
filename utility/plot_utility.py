@@ -77,8 +77,8 @@ def calc_exp_val_sextants(df, df_basis):
 
 
 def timestamp_to_date(timestamp):
-    date_obj = datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%f2Z')
-    date = date_obj.strftime("%Y-%m-%d %H:%M")
+    date_obj = datetime.strptime((timestamp[:19]).strip(), '%Y-%m-%dT%H:%M:%S')
+    date = date_obj.strftime("%d.%m.%Y, %H:%M")
     return date
 
 
