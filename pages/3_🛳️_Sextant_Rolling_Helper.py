@@ -141,6 +141,7 @@ def create_part1():
                     4. Roll mods on the last Voidstone :red[ON YOUR ATLAS]
                     5. Itemize roll with :red[Surveyor's Compass] (1c @ Kirac)
                     """)
+        st.caption("The best sextants to block are updated regularly.")
     st.markdown("---")
 
 
