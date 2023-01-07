@@ -2,6 +2,7 @@ import requests
 import json
 import os
 from datetime import datetime
+from utility.data_handler import write_json, get_data_path
 
 cwd = os.getcwd()
 
@@ -153,6 +154,9 @@ def parse_category(json_data, category_name):
         divine_dict = next(item for item in json_data["lines"] if item["currencyTypeName"] == "Divine Orb")
         divine_price_in_chaos = divine_dict["chaosEquivalent"]
         save_divine_price(divine_price_in_chaos)
+
+        path = get_data_path("currency_prices.json")
+        write_json(json_data, path)
 
     for i, line in enumerate(json_data['lines']):
         item = json_data['lines'][i]

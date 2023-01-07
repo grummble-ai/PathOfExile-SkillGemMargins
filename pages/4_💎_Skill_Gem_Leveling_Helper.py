@@ -4,7 +4,7 @@ import utility.app1.skillgems_data_handler as dh
 import widgets.initializer as initializer
 from utility.firebase_operations import add_action_to_db
 
-TITLE = "Tool: Skill Gem Leveling Helper"
+TITLE = "Skill Gem Leveling Helper"
 VERSION = "v1.1.0"
 
 # TODO: Finish settings and add button to site that can restore default settings // Could be done with sessionstate

@@ -36,3 +36,14 @@ def read_txt_lastentry(file_path):
     with open(file_path, "r") as f:
         content = f.readlines()[-1]
     return content
+
+
+def get_currency_value_in_c(currency_name:str):
+    path = get_data_path("currency_prices.json")
+    json_data = read_json(path)
+    curr_dict = next(item for item in json_data["lines"] if item["currencyTypeName"] == currency_name)
+    # price: always chaos equivalent
+    price = curr_dict["chaosEquivalent"]
+    # time: represents when the poe.ninja fetched the data
+    time = curr_dict["pay"]["sample_time_utc"]
+    return price, time
