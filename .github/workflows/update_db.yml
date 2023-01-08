@@ -45,7 +45,7 @@ jobs:
               
           - name: execute python script skillgems # run the run.py to get the latest data
             run: |
-              python ./utility/app1/skillgems_update_db.py
+              python update_data.py
           - name: Commit and Push Changes
             run: |
               git config user.name "grummble-ai"
