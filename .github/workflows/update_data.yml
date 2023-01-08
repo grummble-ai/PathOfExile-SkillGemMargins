@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Update_DB
+name: Update_data
 
 # Controls when the workflow will run
 on:
@@ -21,17 +21,16 @@ jobs:
           - name: setup python
             uses: actions/setup-python@v3
             with:
-              python-version: 3.x #install the python needed
+              python-version: 3.11 #install the python needed
               cache: 'pip' # caching pip dependencies 
               
-          - uses: actions/cache@master
+          - uses: actions/cache@v3
             id: cache
             with:
-              path: ${{ env.pythonLocation}}/lib/python3.11.1/site-packages/*
-              key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+              path: ~/.cache/pip
+              key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
               restore-keys: |
                 ${{ runner.os }}-pip-
-                ${{ runner.os }}-
 
           - name: Install Dependencies
             if: steps.cache.outputs.cache-hit != 'true'
