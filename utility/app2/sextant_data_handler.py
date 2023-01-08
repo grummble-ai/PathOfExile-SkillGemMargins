@@ -18,8 +18,8 @@ def add_html_colors_to_confidence_val(df):
     green = "#008000"
     red = "#ff0000"
     df = df.assign(lowConfidenceHTML=
-                   [f"<span style=\"color: {red}\">True</span>"
-                    if x else f"<span style=\"color: {green}\">False</span>"
+                   [f"<span style=\"color: {red}\">Yes</span>"
+                    if x else f"<span style=\"color: {green}\">No</span>"
                     for x in df['lowConfidence']])
     return df
 

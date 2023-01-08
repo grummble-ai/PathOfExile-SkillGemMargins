@@ -50,8 +50,8 @@ def create_table():
                                 "icon": "Icon",
                                 "full_text": "Description",
                                 "w_default": "Weighting",
-                                "divine": st.session_state.html_divine,
-                                "chaos": st.session_state.html_chaos,
+                                "divine": "TFT Bulk Price in " + st.session_state.html_divine,
+                                "chaos": "TFT Bulk Price in " + st.session_state.html_chaos,
                                 "lowConfidenceHTML": "Low Confidence"})
 
     st.session_state.html_table = convert_df_with_icon(df)
@@ -140,6 +140,7 @@ def create_part1():
                     - *{st.session_state.sextant_to_block[2]}*
                     4. Roll mods on the last Voidstone :red[ON YOUR ATLAS]
                     5. Itemize roll with :red[Surveyor's Compass] (1c @ Kirac)
+                    6. Sell in bulk on [TFT Discord](https://discord.com/invite/tftrove)
                     """)
         st.caption("The best sextants to block are updated regularly.")
     st.markdown("---")
