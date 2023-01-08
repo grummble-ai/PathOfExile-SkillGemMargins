@@ -22,19 +22,13 @@ jobs:
             uses: actions/setup-python@v3
             with:
               python-version: 3.x #install the python needed
-              cache: 'pip' 
+              cache: 'pip' # caching pip dependencies 
           - name: Install dependencies
-            run: |
-              python -m pip install --upgrade pip
+            run: | 
               pip install -r requirements.txt
           - name: execute python script skillgems # run the run.py to get the latest data
             run: |
-              python skillgems_update_db.py
-            working-directory: ./utility/app1
-          - name: execute python script sextants # run the run.py to get the latest data
-            run: |
-              python sextants_update_db.py
-            working-directory: ./utility/app2
+              python ./utility/app1/skillgems_update_db.py
           - name: Commit and Push Changes
             run: |
               git config user.name "grummble-ai"
