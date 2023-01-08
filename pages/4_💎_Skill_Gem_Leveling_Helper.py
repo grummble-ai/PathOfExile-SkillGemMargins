@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import utility.app1.skillgems_data_handler as dh
 import widgets.initializer as initializer
-from utility.firebase_operations import add_action_to_db
 
 TITLE = "Skill Gem Leveling Helper"
 VERSION = "v1.1.0"

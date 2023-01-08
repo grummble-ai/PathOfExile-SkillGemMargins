@@ -1,9 +1,7 @@
 import json
-import random
-
 import requests
 import pandas as pd
-from utility.data_handler import get_data_path, write_json, read_json
+from .. import data_handler as dh
 
 SAVE_FILE_NAME = "sextant_info_and_data.json"
 URL_TFT_DATA = "https://raw.githubusercontent.com/The-Forbidden-Trove/tft-data-prices/master/lsc/bulk-compasses.json"
@@ -12,8 +10,8 @@ URL_TFT_DATA = "https://raw.githubusercontent.com/The-Forbidden-Trove/tft-data-p
 def load_TFTdata_from_github():
     req = requests.get(URL_TFT_DATA)
     data = req.json()
-    storage_path = get_data_path(filename="sextant_data_tft.json", subf="app2")
-    write_json(data=data, file_path=storage_path)
+    storage_path = dh.get_data_path(filename="sextant_data_tft.json", subf="app2")
+    dh.write_json(data=data, file_path=storage_path)
 
 
 def add_html_colors_to_confidence_val(df):
@@ -27,15 +25,15 @@ def add_html_colors_to_confidence_val(df):
 
 
 def save_mixed_data(df):
-    storage_path = get_data_path(filename=SAVE_FILE_NAME, subf="app2")
+    storage_path = dh.get_data_path(filename=SAVE_FILE_NAME, subf="app2")
     df.to_json(path_or_buf=storage_path)
 
 
 def mix_sextant_info_and_tft_data():
-    path_info = get_data_path(filename="raw_sextant_info.xlsx", subf="app2")
+    path_info = dh.get_data_path(filename="raw_sextant_info.xlsx", subf="app2")
     df_raw = pd.read_excel(path_info, index_col="Nr")
 
-    path_data = get_data_path(filename="sextant_data_tft.json", subf="app2")
+    path_data = dh.get_data_path(filename="sextant_data_tft.json", subf="app2")
     with open(path_data) as f:
         data_json = json.load(f)
     df_tft = pd.json_normalize(data_json, record_path=['data'], meta=['timestamp'])
@@ -52,8 +50,8 @@ def exclude_minion_sextants():
                        "Additional Monsters deal Lightning",
                        "Additional Monsters deal Physical",
                        "Additional Monsters deal Chaos"]
-    path_data = get_data_path(filename="sextant_data_tft.json", subf="app2")
-    data = read_json(path_data)
+    path_data = dh.get_data_path(filename="sextant_data_tft.json", subf="app2")
+    data = dh.read_json(path_data)
     sextant_data = data["data"]
 
     info = []
@@ -68,7 +66,7 @@ def exclude_minion_sextants():
     for slices in info_sorted[:3]:
         exclude.append(slices[1])
 
-    write_json(exclude, get_data_path(filename="sextants_to_block.json", subf="app2"))
+    dh.write_json(exclude, dh.get_data_path(filename="sextants_to_block.json", subf="app2"))
 
 
 def objective_function():

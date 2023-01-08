@@ -135,9 +135,9 @@ def create_part1():
     with colfourth:
         st.markdown(f"""
                     3. Block these 3 Sextants mods on 3 of your voidstones: 
-                    - {st.session_state.sextant_to_block[0]}
-                    - {st.session_state.sextant_to_block[1]}
-                    - {st.session_state.sextant_to_block[2]}
+                    - *{st.session_state.sextant_to_block[0]}*
+                    - *{st.session_state.sextant_to_block[1]}*
+                    - *{st.session_state.sextant_to_block[2]}*
                     4. Roll mods on the last Voidstone :red[ON YOUR ATLAS]
                     5. Itemize roll with :red[Surveyor's Compass] (1c @ Kirac)
                     """)

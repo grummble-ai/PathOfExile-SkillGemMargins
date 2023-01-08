@@ -2,7 +2,7 @@ import requests
 import json
 import os
 from datetime import datetime
-from utility.data_handler import write_json, get_data_path
+from .. import data_handler as dh
 
 cwd = os.getcwd()
 
@@ -154,9 +154,7 @@ def parse_category(json_data, category_name):
         divine_dict = next(item for item in json_data["lines"] if item["currencyTypeName"] == "Divine Orb")
         divine_price_in_chaos = divine_dict["chaosEquivalent"]
         save_divine_price(divine_price_in_chaos)
-
-        path = get_data_path("currency_prices.json")
-        write_json(json_data, path)
+        dh.write_json(json_data, dh.get_data_path("currency_prices.json"))
 
     for i, line in enumerate(json_data['lines']):
         item = json_data['lines'][i]
@@ -260,7 +258,7 @@ def get_path(filename:str, **kwargs):
 
 
 def load_league():
-    os.path.join(cwd, "utility", "app1", "regular_gem_xp_df")
+    os.path.join(cwd, "utility", "", "app1/regular_gem_xp_df")
     path = get_path(filename="League.txt")
     with open(path, "r") as f:
         league = f.readlines()
