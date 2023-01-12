@@ -264,7 +264,7 @@ def sessionstate_init():
 
 
 # create welcome page
-SUBHEADER = '''This tool is still being tested. Please report any bugs / feedback to me.'''
+SUBHEADER = '''This tool is still being tested. Please [report any bugs / feedback to me](https://discord.gg/KHakZVKPRu).'''
 VERSION = "0.9.2"
 initializer.create_boilerplate(pagetitle="Sextant Rolling Helper", version=VERSION, subheader=SUBHEADER)
 

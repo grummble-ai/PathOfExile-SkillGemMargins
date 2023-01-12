@@ -3,19 +3,24 @@ import streamlit as st
 
 def create_welcomepage():
     st.write('''
-    Welcome fellow Exile, glad to have you here! This is my 'website'! My plan is to gather a couple of 
-    useful tools for you and to create some PoE-related tools myself!\n 
-    - **Regarding community tools:** I will add all the tools I use myself (use them at your own risk!) to a single place for our convenience. Say adieu to searching. \n 
-    - **Regarding my own crafts:** Each one will have its dedicated page and I will update old work on new tools whenever my family allows me to do so. \n 
-    Sounds great? ''')
+    Welcome fellow Exile, glad to have you here! This is my 'website' where you can find all sorts of 
+    useful tools for [Path of Exile](https://www.pathofexile.com/)! \n
+    Some of them are created by myself, others are just gathered here for your convenience. All of them are, to my 
+    knowledge, free to use. \n ''')
 
-    st.markdown("![Sloth Gif](https://i.gifer.com/4j.gif)")
+    st.markdown("<img src=\"https://i.gifer.com/4j.gif\" width=\"200\">", unsafe_allow_html=True)
+
+    st.markdown("-----")
 
     st.write('''
-            Great!
+    Here's what you can find on this website: \n 
+    - [Tool Compilation](https://poeacademy.streamlit.app/Useful_Tools_(Compilation)): These are the tools that make PoE much more enjoyable to play
+    - [Sextant Rolling Helper](https://poeacademy.streamlit.app/Sextant_Rolling_Helper): Shows how profitable Sextant Rolling is with current prices
+    - [Skill Gem Leveling Helper](https://poeacademy.streamlit.app/Skill_Gem_Leveling_Helper): Shows what the most profitable gems to level are currently
+    - [Build Guides BUttler](https://poeacademy.streamlit.app/Build_Guides): potential new tool (visit for more info)
+    You can also just navigate by using the menu on the top of the sidebar. Sounds great? Great. ''')
+
+    st.write('''
             Enjoy this project and please provide feedback on .. really anything: things you like, things you dislike,
-            and things you want to see in the future. You can reach me best on **Discord**, so just follow the link in 
-            the sidebar.  \n
-            
-            **Now go and check out what's available on this website! **
+            and things you want to see in the future. You best contact me on my **[Discord](https://discord.com/channels/827836172184584214/981558870507929648)**.  \n
             ''')
