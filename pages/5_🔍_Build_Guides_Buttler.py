@@ -1,33 +1,11 @@
 import streamlit as st
 from utility.firebase_operations import add_action_to_db
 import widgets.initializer as initializer
-import os
-import base64
-from PIL import Image
+from utility.plot_utility import get_img_with_href as get_img_with_href
 
 # add_action_to_db(st.session_state.db_connection,
 #                  viewer_id=st.session_state.viewer_id,
 #                  document=u"actions_toolbox")
-
-
-@st.cache(allow_output_mutation=True)
-def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-
-@st.cache(allow_output_mutation=True)
-def get_img_with_href(local_img_path, target_url):
-    img_format = os.path.splitext(local_img_path)[-1].replace('.', '')
-    bin_str = get_base64_of_bin_file(local_img_path)
-    html_code = f'''<div width=\"200px\">
-        <a href="{target_url}">
-            <img src="data:image/{img_format};base64,{bin_str}" style="max-width: 10%"/>
-        </a>
-        </div>'''
-    return html_code
-
 
 TITLE = "Build Guide Buttler"
 SUBHEADER = '''
@@ -63,5 +41,6 @@ st.markdown('''**Solution:** If you think that creating something like this woul
             mine and make this tool happen when we reach 100€/Month (**click the image below**):''')
 # taken from: https://discuss.streamlit.io/t/href-on-image/9693/4
 png_html = get_img_with_href('img/Digital-Patreon-Wordmark_FieryCoral.png',
-                             'https://www.patreon.com/user/membership?u=86747551')
+                             'https://www.patreon.com/user/membership?u=86747551',
+                             10)
 st.markdown(png_html, unsafe_allow_html=True)

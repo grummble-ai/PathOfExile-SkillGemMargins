@@ -1,9 +1,12 @@
 import pandas as pd
 from utility.data_handler import get_data_path, read_json
 from datetime import datetime
+import streamlit as st
+import os
+import base64
 
 
-def default_img_url(type:str):
+def default_img_url(type: str):
     if type == "chaos":
         URL = "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1"
     elif type == "divine":
@@ -32,17 +35,17 @@ def path_to_image_html(path):
     return '<img src="' + path + '" width="40" >'
 
 
-def df_drop_column(df, columns_to_drop:list):
+def df_drop_column(df, columns_to_drop: list):
     df = df.drop(columns_to_drop, axis=1)
     return df
 
 
-def df_rename_columns(df, column_names:dict):
+def df_rename_columns(df, column_names: dict):
     df = df.rename(columns=column_names)
     return df
 
 
-def column_title_link_to_html(img_link:str, **kwargs):
+def column_title_link_to_html(img_link: str, **kwargs):
     text = kwargs.get('text', None)
     str_left = '<img src="'
     str_right = '" width="25" >'
@@ -53,7 +56,7 @@ def column_title_link_to_html(img_link:str, **kwargs):
     return html
 
 
-def sort_df_keep_X_best_results(df, column_name:str, count_results:int):
+def sort_df_keep_X_best_results(df, column_name: str, count_results: int):
     df = df.nlargest(count_results, column_name, keep="first")
     return df
 
@@ -63,7 +66,7 @@ def total_count_sextant_mods(df):
     return length
 
 
-def keep_rows_depending_on_conent_of_column(df, column_name:str, column_value):
+def keep_rows_depending_on_conent_of_column(df, column_name: str, column_value):
     df = df[df[column_name] == column_value]
     return df
 
@@ -108,8 +111,6 @@ def swap_df_columns(df, col1, col2):
     df = df[col_list]
     return df
 
-
-
     # # TODO: THIS FUNCTION DOES NOT FIND THE GLOBAL OPTIMUM! REMOVING 3x ADDITIONAL MONSTERS YIELDS 9.14 WHILE
     # df_raw = df
     # exp_val_raw = calculate_expected_value_sextants(df_raw)
@@ -150,3 +151,22 @@ def swap_df_columns(df, col1, col2):
     # # calculate the resulting improvements for gross profits
     # final_improvement = final_val - exp_val_raw[0]
     # return df_clensed, rows_removed_ind, rows_removed_names, final_val, final_weight, final_improvement
+
+
+@st.cache(allow_output_mutation=True)
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+
+@st.cache(allow_output_mutation=True)
+def get_img_with_href(local_img_path, target_url, max_width_percent:int):
+    img_format = os.path.splitext(local_img_path)[-1].replace('.', '')
+    bin_str = get_base64_of_bin_file(local_img_path)
+    html_code = f'''<div width=\"200px\">
+        <a href="{target_url}">
+            <img src="data:image/{img_format};base64,{bin_str}" style="max-width: {max_width_percent}%"/>
+        </a>
+        </div>'''
+    return html_code
