@@ -5,7 +5,7 @@ from utility.plot_utility import get_img_with_href as get_img_with_href
 
 def create_sidebar():
     # side bar
-    st.sidebar.write("↑ **Navigation** ↑")
+    st.sidebar.write("🔼 **Navigation** 🔼")
     try:
         st.sidebar.write("This is a side-project by me:"
                          " **[PoE Academy](https://www.youtube.com/c/PoEAcademy)**. You may be familiar with my YT logo: ")
