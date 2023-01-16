@@ -26,6 +26,7 @@ def initialize_session_state():
         st.session_state["actions_toolbox"] = 0
 
 
+@st.cache(ttl=43200) # 43200 seconds = 12 hours
 def start_tracking():
     initialize_session_state()
 
