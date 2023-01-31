@@ -8,10 +8,9 @@ from utility.plot_utility import convert_df, df_drop_column, load_mixed_data, df
     keep_rows_depending_on_conent_of_column, calc_exp_val_sextants, timestamp_to_date, \
     block_sextants, convert_df_with_icon, swap_df_columns
 
-
-# add_action_to_db(st.session_state.db_connection,
-#                  viewer_id=st.session_state.viewer_id,
-#                  document=u"actions_sextants")
+SUBHEADER = '''This tool is still being tested. 
+            Please [report any bugs / feedback to me](https://discord.gg/KHakZVKPRu).'''
+VERSION = "0.9.3"
 
 
 def create_table():
@@ -265,9 +264,7 @@ def sessionstate_init():
         st.session_state.html_table = ""
 
 
-# create welcome page
-SUBHEADER = '''This tool is still being tested. Please [report any bugs / feedback to me](https://discord.gg/KHakZVKPRu).'''
-VERSION = "0.9.2"
+#
 initializer.create_boilerplate(pagetitle="Sextant Rolling Helper", version=VERSION, subheader=SUBHEADER)
 
 # initialize session state
