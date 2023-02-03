@@ -14,6 +14,7 @@ VERSION = "0.9.3"
 
 
 def create_table():
+    #TODO: it seems that all additional monster sextants are missing although I'm just blocking 3 of them?
     #############
     # preparation
     #############
@@ -38,7 +39,7 @@ def create_table():
 
     # remove unwanted columns
     df = df_drop_column(df, ["Level", "Line0", "Line1", "Line2", "Line3", "Spalte1", "lowConfidence",
-                             "w_has_atlas_mission", "w_hall_of_grandmasters", "w_no_strongboxes",
+                             "w_has_atlas_mission", "w_hall_of_grandmasters", "ratio", "w_no_strongboxes",
                              "w_unique_map", "w_no_monster_packs", "w_no_boss", "w_map_has_blight",
                              "w_vault_of_atziri", "w_elder_occupied", "timestamp", "Item"])
 
@@ -68,7 +69,7 @@ def create_part1():
         st.subheader("1: Settings")
         st.markdown("Low Confidence:")
         st.checkbox(label="Exclude Low Confidence Sextants",
-                    value=st.session_state.hide_low_confidence,
+                    # value=st.session_state.hide_low_confidence,
                     key="hide_low_confidence")
 
         st.slider(label="I am confident this many rolls will sell:",
