@@ -2,9 +2,10 @@ import streamlit as st
 import pandas as pd
 import utility.app1.skillgems_data_handler as dh
 import widgets.initializer as initializer
+from utility.plot_utility import df_get_max_col
 
 TITLE = "Skill Gem Leveling Helper"
-VERSION = "v1.1.0"
+VERSION = "v1.2.0"
 
 # TODO: Finish settings and add button to site that can restore default settings // Could be done with sessionstate
 DEFAULT_SETTINGS = {
@@ -18,9 +19,10 @@ DEFAULT_SETTINGS = {
     "show_gem_type_alt": True,
     "show_gem_type_awk": True,
     "show_gem_type_exc": True,
-    "default_min_roi": 10,
-    "default_min_chaos": 0,
+    "default_min_roi": 0,
+    "default_min_chaos": 0
 }
+
 
 # ToDo: going from 0 quality to 20 quality means flipping the gem, in practice, and should add xp needed equivalent to 1->20 the gem
 # ToDo: Gems you buy at level 1-19 should be considered level 1. It changes almost nothing, but would cull potential duplicates. Also, would induce less confusion for all alt qual gems being level 16
@@ -34,7 +36,7 @@ def create_top(df):
     #                  viewer_id=st.session_state.viewer_id,
     #                  document=u"actions_skillgemleveling")
 
-    st.subheader("1: Set your Preferences:")
+    st.subheader("1️ Set your Preferences")
 
     # Settings
     colfirst, ph1, colsecond, ph2, colthird, ph3, colfourth = st.columns([2, 0.5, 2, 0.5, 2, 0.5, 2])
@@ -62,22 +64,26 @@ def create_top(df):
         gem_types = [alt_gems, awakened, exceptional]
 
     with colfourth:
-        st.caption("Minimum values:")
-        min_roi = st.slider('Minimum Return on Investment (RoI):',
-                            value=DEFAULT_SETTINGS["default_min_roi"],
-                            min_value=0,
-                            max_value=100,
-                            step=1)
-        min_c = st.slider('Minimum Buy-In (Chaos Orbs):',
-                          min_value=DEFAULT_SETTINGS["default_min_chaos"],
-                          value=0,
-                          max_value=100,
-                          step=1)
+        # st.caption("Miscellaneous:")
+        min_roi = st.number_input('Return on Investment (Minimum):',
+                                  value=DEFAULT_SETTINGS["default_min_roi"],
+                                  min_value=0,
+                                  max_value=st.session_state.roi_max-2,
+                                  step=1)
+        min_c = st.number_input(f'Buy Chaos (Minimum):',
+                                min_value=DEFAULT_SETTINGS["default_min_chaos"],
+                                value=0,
+                                max_value=st.session_state.buy_chaos_max-2,
+                                step=1)
+        max_c = st.number_input('Buy Chaos (Maximum):',
+                                min_value=0,
+                                value=st.session_state.buy_chaos_max,
+                                step=1)
 
-    st.write("_The table below updates automatically after changes._\n")
+    st.write("_The table below updates automatically when you make changes to your preferences._\n")
 
     st.markdown("---")
-    st.subheader("2: Check the Best Results:")
+    st.subheader("2️ Check the Best Results")
 
     tab1, tab2, tab3 = st.tabs(["💰 Results Sorted by Margin / Rel. XP", "💎 Results Sorted by Margin",
                                 "💸 Results Sorted by Return of Investment"])
@@ -164,11 +170,13 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
     # gem_types = [alt_gems, awakened, exceptional]
     df_top10 = drop_gem_types(df_top10, alt_gem=gem_types[0], awaken=gem_types[1], exception=gem_types[2])
 
-    # filter: buy-in c
+    # filter: min buy chaos
     df_top10 = df_top10[df_top10["buy_c"] >= min_c]
 
+    # filter: max buy chaos
+
     # filter: roi
-    df_top10 = df_top10[df_top10["listing_count"] >= min_roi]
+    df_top10 = df_top10[df_top10["roi"] >= min_roi]
 
     # show only the 10 best results
     if mode == "margin":
@@ -256,7 +264,11 @@ def create_rawdata(df):
 
 
 def create_FAQ():
-    with st.expander("FAQ (click me)"):
+    with st.expander("How does it work?"):
+        st.markdown(
+            '''<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/py69sI2ldxw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>''',
+            unsafe_allow_html=True)
+    with st.expander("FAQ"):
         st.write("""
             - **General**
             **Why are there so many gems that start from level 16?** This is because poe.ninja's API returns many gems
@@ -299,6 +311,11 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 1.2.0** (07th of February, 2023) \n
+            - Minor changes to text
+            - Added a YouTube video with explanations under "How does it work?"
+            - Fixed a bug when setting the minimum roi
+            - Added buy chaos (**maximum**) to the preference section
             **Version 1.1.0** (20th of December, 2022) \n
             - Added chaos orb and divine orb icons to some column titles 
             - Added trade links to the gems
@@ -335,21 +352,30 @@ def create_changelog():
         """)
 
 
+def session_state_variables(df):
+    # max buy in chaos
+    if 'buy_chaos_max' not in st.session_state:
+        buy_chaos_max = df_get_max_col(df, "buy_c")
+        st.session_state.buy_chaos_max = buy_chaos_max
+
+    if 'roi_max' not in st.session_state:
+        roi_max = df_get_max_col(df, "roi")
+        st.session_state.roi_max = roi_max
+
+
 def load_data():
     dict_gem = dh.load_json()
     df = pd.DataFrame.from_dict(dict_gem, orient="index")
+    session_state_variables(df)
     return df
 
 
 SUBHEADER = '''
-            **Hey, exile!** Welcome to this tool. I have hated the process of going through poe.ninja manually to
-            find suitable skill gems, which is why I've decided to create a small tool that does this automatically.
-            Since the tool accesses both poe.ninja's and GGG's API, it should continue to work unless there are
-            some game-breaking changes.
+            Hey exile, this tool shows you the best skill gems to level for profit! The data from [poe.ninja](https://poe.ninja/)
+            is updated automatically every day. Start by setting your preferences **(1️)** and then check the results **(2️)**! 
             '''
+
 initializer.create_boilerplate(pagetitle=TITLE, version=VERSION, subheader=SUBHEADER)
 
 df = load_data()
 create_top(df)
-st.write(f"You are working with {VERSION}; This site is not affiliated with, funded, or in any way associated "
-         f"with Grinding Gear Games.")

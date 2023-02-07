@@ -66,7 +66,7 @@ def create_part1():
     colfirst, ph1, colsecond, ph2, colthird, ph3, colfourth = st.columns([2, 0.5, 2, 0.5, 2, 0.5, 2])
 
     with colfirst:
-        st.subheader("1: Settings")
+        st.subheader("1️  Settings")
         st.markdown("Low Confidence:")
         st.checkbox(label="Exclude Low Confidence Sextants",
                     # value=st.session_state.hide_low_confidence,
@@ -82,7 +82,7 @@ def create_part1():
         exp_val_sliced, total_weights_sliced = calc_exp_val_sextants(st.session_state.df_sliced,
                                                                      st.session_state.df_blocked)
 
-        st.subheader("2: Check If Worth It")
+        st.subheader("2️ Check If Worth It")
 
         if round(exp_val_sliced, 2):
             gross_color = ":green["
@@ -122,7 +122,7 @@ def create_part1():
         # )
 
     with colthird:
-        st.subheader("3:  How to roll Sextants?")
+        st.subheader("3️ How to roll Sextants?")
         st.markdown("""
                             1. You need :red[4] voidstones
                             2. Allocate the Atlas passive :red[Enduring Influence] for 4 instead of 3 uses:

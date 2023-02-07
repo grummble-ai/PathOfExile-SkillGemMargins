@@ -8,12 +8,12 @@ import widgets.initializer as initializer
 
 TITLE = "Path of Exile Tools I use (and You Should Be Using)"
 SUBHEADER = '''
-            **Hey, exile!** Here's a compilation of tools you might want to improve you experience with PoE. \n
-            ![Do-it-yourself-patrik-gif](https://media.tenor.com/gZ5zDNNSqhAAAAAC/do-it-yourself-tools.gif) \n
-            Jokes aside, they will make your life so much easier - trust me. If you are not using at least the 
-            essentials, you are missing a tremendous amount of convenience. \n 
+            **Hey, exile!** Here's a compilation of tools you want to use to improve you experience with PoE. \n
             '''
+
 initializer.create_boilerplate(pagetitle=TITLE, version="", subheader=SUBHEADER)
+
+# st.markdown("<img src=\"https://media.tenor.com/gZ5zDNNSqhAAAAAC/do-it-yourself-tools.gif\" width=\"300\">", unsafe_allow_html=True)
 
 st.subheader('Essential Tools:')
 st.markdown('''

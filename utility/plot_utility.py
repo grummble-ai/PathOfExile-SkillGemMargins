@@ -161,7 +161,7 @@ def get_base64_of_bin_file(bin_file):
 
 
 @st.cache(allow_output_mutation=True)
-def get_img_with_href(local_img_path, target_url, max_width_percent:int):
+def get_img_with_href(local_img_path, target_url, max_width_percent: int):
     img_format = os.path.splitext(local_img_path)[-1].replace('.', '')
     bin_str = get_base64_of_bin_file(local_img_path)
     html_code = f'''<div width=\"200px\">
@@ -170,3 +170,10 @@ def get_img_with_href(local_img_path, target_url, max_width_percent:int):
         </a>
         </div>'''
     return html_code
+
+
+def df_get_max_col(df, col_name: str):
+    series_max_val = df.loc[df[col_name].idxmax()]
+    max_val_raw = series_max_val[col_name]
+    max_val = round(float(max_val_raw), 0)+1
+    return int(max_val)
