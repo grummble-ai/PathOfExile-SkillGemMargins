@@ -85,7 +85,7 @@ def create_top(df):
     st.markdown("---")
     st.subheader("2️ Check the Best Results")
 
-    tab1, tab2, tab3 = st.tabs(["💰 Results Sorted by Margin / Rel. XP", "💎 Results Sorted by Margin",
+    tab1, tab2, tab3 = st.tabs(["💰 Results Sorted by Normalized Margin", "💎 Results Sorted by Margin",
                                 "💸 Results Sorted by Return of Investment"])
     with tab1:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
@@ -208,11 +208,11 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
                                         "icon_url": "Icon",
                                         "buy_c": column_title_link_to_html("chaos", "Buy"),
                                         "sell_c": column_title_link_to_html("chaos", "Sell"),
-                                        "upgrade_path": "Upgrade Path",
+                                        "upgrade_path": "Upgrade Path [Lvl/Qual]",
                                         "buy_divine": column_title_link_to_html("divine", "Buy"),
                                         "sell_divine": column_title_link_to_html("divine", "Sell"),
                                         "margin_divine": column_title_link_to_html("divine", "Margin"),
-                                        "margin_gem_specific": "Margin / Rel. XP",
+                                        "margin_gem_specific": "Norm. " + column_title_link_to_html("divine", "Margin"),
                                         # "average_returns_ex": "Average Returns (Ex)",
                                         "roi": "RoI",
                                         "listing_count": "No. Listings",
@@ -292,7 +292,7 @@ def create_FAQ():
             decision on which gem to level so I have no plans on implementing a double check for this. \n
             **Sell (Divine)** The selling price of the gem in Divine Orbs. \n
             **Margin?** Selling price - Buying Price \n
-            **Margin / Rel. Exp.?** Margin but normalized, i.e. taking into account different amounts of xp to 
+            **Norm_alized_ Margin?** Margin but normalized, i.e. taking into account different amounts of xp to 
             level certain gems to their maximum level. The highest amount is 1.920.762.677 for awakened gems. A regular 
             gem requires 684.009.294 xp to be leveled from 1/0 to 20/20. Therefore, the margin of the regular gem
             is divided by 684.009.294 / 1.920.762.677 = 0.3428 to account for faster leveling of the regular gem, i.e.,
