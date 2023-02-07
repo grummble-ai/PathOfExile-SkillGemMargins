@@ -46,7 +46,7 @@ def create_top(df):
         hide_corrupted_gems = st.checkbox(label="Hide Corrupted Gems", value=DEFAULT_SETTINGS["hide_corrupted"])
         hide_quality_gems = st.checkbox(label="Hide Gems with Quality", value=DEFAULT_SETTINGS["hide_quality"])
         low_conf = st.checkbox(label="Hide Low Confidence", value=DEFAULT_SETTINGS["hide_low_confidence"])
-        nr_conf = st.number_input('Low Confidence Threshold (No. of Listings):', min_value=0,
+        nr_conf = st.number_input('Low Confidence Threshold (Min. No. Listings):', min_value=0,
                                   value=DEFAULT_SETTINGS["low_confidence_threshold"])
 
     with colsecond:
