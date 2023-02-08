@@ -5,7 +5,7 @@ import widgets.initializer as initializer
 from utility.plot_utility import df_get_max_col
 
 TITLE = "Skill Gem Leveling Helper"
-VERSION = "v1.2.0"
+VERSION = "v1.2.1"
 
 # TODO: Finish settings and add button to site that can restore default settings // Could be done with sessionstate
 DEFAULT_SETTINGS = {
@@ -77,7 +77,8 @@ def create_top(df):
                                 step=1)
         max_c = st.number_input('Buy Chaos (Maximum):',
                                 min_value=0,
-                                value=st.session_state.buy_chaos_max,
+                                max_value=st.session_state.buy_chaos_max_limit,
+                                key="buy_chaos_max",
                                 step=1)
 
     st.write("_The table below updates automatically when you make changes to your preferences._\n")
@@ -174,6 +175,8 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
     df_top10 = df_top10[df_top10["buy_c"] >= min_c]
 
     # filter: max buy chaos
+    factor = st.session_state.buy_chaos_max
+    df_top10 = df_top10[df_top10["buy_c"] <= st.session_state.buy_chaos_max]
 
     # filter: roi
     df_top10 = df_top10[df_top10["roi"] >= min_roi]
@@ -311,6 +314,8 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 1.2.1** (08th of February, 2023) \n
+            - Fixed a bug regarding the preferences: buy chaos (maximum)
             **Version 1.2.0** (07th of February, 2023) \n
             - Minor changes to text
             - Added a YouTube video with explanations under "How does it work?"
@@ -357,6 +362,9 @@ def session_state_variables(df):
     if 'buy_chaos_max' not in st.session_state:
         buy_chaos_max = df_get_max_col(df, "buy_c")
         st.session_state.buy_chaos_max = buy_chaos_max
+
+    if 'buy_chaos_max_limit' not in st.session_state:
+        st.session_state.buy_chaos_max_limit = buy_chaos_max
 
     if 'roi_max' not in st.session_state:
         roi_max = df_get_max_col(df, "roi")
