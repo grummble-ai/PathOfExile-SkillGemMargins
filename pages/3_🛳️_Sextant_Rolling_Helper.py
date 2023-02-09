@@ -3,14 +3,14 @@ from utility.firebase_operations import add_action_to_db
 import widgets.initializer as initializer
 from PIL import Image
 from utility.data_handler import get_currency_value_in_c
-from utility.plot_utility import convert_df, df_drop_column, load_mixed_data, df_rename_columns, default_img_url, \
+from utility.plot_utility import df_drop_column, load_mixed_data, df_rename_columns, default_img_url, \
     column_title_link_to_html, sort_df_keep_X_best_results, total_count_sextant_mods, \
     keep_rows_depending_on_conent_of_column, calc_exp_val_sextants, timestamp_to_date, \
-    block_sextants, convert_df_with_icon, swap_df_columns
+    block_sextants, convert_df_with_icon, swap_df_columns, get_low_confidence_count
 
 SUBHEADER = '''This tool is still being tested. 
             Please [report any bugs / feedback to me](https://discord.gg/KHakZVKPRu).'''
-VERSION = "0.9.3"
+VERSION = "0.10.0"
 
 
 def create_table():
@@ -66,7 +66,7 @@ def create_part1():
     colfirst, ph1, colsecond, ph2, colthird, ph3, colfourth = st.columns([2, 0.5, 2, 0.5, 2, 0.5, 2])
 
     with colfirst:
-        st.subheader("1️  Settings")
+        st.subheader("1️  Preferences")
         st.markdown("Low Confidence:")
         st.checkbox(label="Exclude Low Confidence Sextants",
                     # value=st.session_state.hide_low_confidence,
@@ -76,28 +76,19 @@ def create_part1():
                   max_value=st.session_state.cnt_sextants,
                   key="nr_results")
         st.caption(
-            "70/70 would mean that you are confident that all rolls sell; 17/68 means that the best 25% would sell.")
+            "75/75 would mean that you are confident that all rolls sell; 25/75 means that the most expensive 33% "
+            "would sell.")
 
     with colsecond:
         exp_val_sliced, total_weights_sliced = calc_exp_val_sextants(st.session_state.df_sliced,
                                                                      st.session_state.df_blocked)
 
-        st.subheader("2️ Check If Worth It")
+        st.subheader("2️ Check Profitability")
 
         if round(exp_val_sliced, 2):
             gross_color = ":green["
         else:
             gross_color = ":red["
-
-        st.markdown("Avg. __Gross__ Profit = " + gross_color + str(round(exp_val_sliced, 2)) + "] " + str(
-            st.session_state.html_chaos), unsafe_allow_html=True)
-        st.caption(
-            f"Assuming that only {st.session_state.nr_results} out of {st.session_state.cnt_sextants} sextant rolls "
-            f"(depending on your settings) will sell __AND__ you block the 3 sextant rolls in the list on the "
-            f"right for rolling sextants; It would be " +
-            str(round(st.session_state.exp_val_raw, 2)) + f" Chaos without any filters, i.e. rolling without blocking "
-                                                          f"and all {st.session_state.cnt_sextants} sextant rolls "
-                                                          f"would sell.")
 
         if round(exp_val_sliced - st.session_state.price_awk - 1, 2) > 0:
             net_color = ":green["
@@ -109,23 +100,17 @@ def create_part1():
             "Avg. __Net__ Profit = **" + net_color + str(round(exp_val_sliced - st.session_state.price_awk - 1, 2))
             + "]** " + str(st.session_state.html_chaos),
             unsafe_allow_html=True)
-        st.caption(f"Your true average profit as it considers expenditures: Net = Gross - Awk. Sextant Price - "
-                   f"Surveyor's Compass Price = " +
+        st.caption(f"Your average profit. It considers your preferences on the left, blocking the 3 sextants on the "
+                   f"right and your expenditures for rolling: "
+                   f"_Net = Gross - Awk. Sextant Price - Surveyor's Compass Price = " +
                    str(round(exp_val_sliced, 2)) + "C - " +
-                   str(st.session_state.price_awk) + "C - 1C ")
-
-        # sextant_per_div = round(st.session_state.price_div / st.session_state.price_awk, 2)
-        # st.markdown(
-        #     str(st.session_state.html_awk_sextant) + " / " + str(st.session_state.html_divine) + " = " + str(
-        #         sextant_per_div),
-        #     unsafe_allow_html=True
-        # )
+                   str(st.session_state.price_awk) + "C - 1C_")
 
     with colthird:
-        st.subheader("3️ How to roll Sextants?")
+        st.subheader("3️ Roll Instructions")
         st.markdown("""
-                            1. You need :red[4] voidstones
-                            2. Allocate the Atlas passive :red[Enduring Influence] for 4 instead of 3 uses:
+                            1. You need **:red[4]** voidstones
+                            2. Allocate the Atlas passive **:red[Enduring Influence]** for 4 instead of 3 uses:
                             """)
         image = Image.open("img/enduring_influence.png")
         st.image(image)
@@ -136,25 +121,24 @@ def create_part1():
                     - *{st.session_state.sextant_to_block[0]}*
                     - *{st.session_state.sextant_to_block[1]}*
                     - *{st.session_state.sextant_to_block[2]}*
-                    4. Roll sextant mods on the last Voidstone :red[ON YOUR ATLAS]
-                    5. Itemize each worthy sextant rolls with :red[Surveyor's Compass] for 1c @ Kirac
+                    4. Roll sextant mods on the last Voidstone **:red[ON YOUR ATLAS]**
+                    5. Itemize each worthy sextant rolls with **:red[Surveyor's Compass]** for 1c @ Kirac
                     6. Sell on [trade](https://www.pathofexile.com/trade) or in bulk on [TFT Discord](https://discord.com/invite/tftrove)
                     """)
-        st.caption("The best sextants to block are updated automatically.")
+        st.caption("The best sextants are recalculated twice a day.")
     st.markdown("---")
 
 
 def create_part2():
-    st.subheader("3: Itemize Roll Whenever You Hit Something Good:")
-    st.caption("_The table below updates automatically after changes._\n")
+    st.subheader("4️ Itemize Roll Whenever You Hit One Of The Mods Below:")
+    st.caption("_The table below updates automatically after changing your preferences._\n")
 
-    st.markdown(
-        st.session_state.html_table,
-        unsafe_allow_html=True
-    )
-
-    st.caption(
-        f"PoE Ninja and TFT fetched on {timestamp_to_date(st.session_state.timestamp)} GMT+2.")
+    with st.expander("Sextant Rolls Sorted By Price (click to expand/close)", expanded=True):
+        st.markdown(
+            st.session_state.html_table,
+            unsafe_allow_html=True
+        )
+        st.caption(f"PoE Ninja and TFT fetched on {timestamp_to_date(st.session_state.timestamp)} GMT+2.")
 
 
 def create_FAQ():
@@ -192,6 +176,10 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 0.10.0** (09th of February, 2023) \n
+            - Added math logic (linear optimization) to find the best sextants to block 
+            - Removed Gross 1 and Gross 2 as it was more confusing than helping
+            - Wrapped the result table into an expander
             **Version 0.9.3** (31th of January, 2023) \n
             - Reworked Section 2 "Check If Worth It" for more clarity
             - Minor improvements to the UI
@@ -227,6 +215,8 @@ def sessionstate_init():
     if 'exp_val_raw' not in st.session_state:
         st.session_state.exp_val_raw, tot_weights_raw = calc_exp_val_sextants(st.session_state.df_raw,
                                                                               st.session_state.df_raw)
+    if 'count_low_conf' not in st.session_state:
+        st.session_state.count_low_conf = get_low_confidence_count(st.session_state.df_raw)
 
     if 'hide_low_confidence' not in st.session_state:
         st.session_state.hide_low_confidence = True

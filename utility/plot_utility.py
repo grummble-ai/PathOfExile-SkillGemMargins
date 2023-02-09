@@ -87,10 +87,10 @@ def timestamp_to_date(timestamp):
 
 def block_sextants(df):
     sextants_to_block = read_json(get_data_path("sextants_to_block.json", subf="app2"))
-    for sextant in sextants_to_block:
+    for sextant in sextants_to_block[1]:
         df = df[df["name"] != sextant]
 
-    return df, sextants_to_block
+    return df, sextants_to_block[1]
 
 
 # Converting links to html tags
@@ -175,5 +175,11 @@ def get_img_with_href(local_img_path, target_url, max_width_percent: int):
 def df_get_max_col(df, col_name: str):
     series_max_val = df.loc[df[col_name].idxmax()]
     max_val_raw = series_max_val[col_name]
-    max_val = round(float(max_val_raw), 0)+1
+    max_val = round(float(max_val_raw), 0) + 1
     return int(max_val)
+
+
+def get_low_confidence_count(df):
+    result_df = df[df['lowConfidence'] == True]
+    count = len(result_df.index)
+    return count
