@@ -2,3 +2,4 @@
 firestore-key.json
 key-to-toml.py
 utility/app2/sextant_raw_data_xlsx_to_json.py
+venv/
