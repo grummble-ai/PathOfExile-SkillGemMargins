@@ -1,7 +1,7 @@
 import widgets.welcomepage as welcomepage
 import widgets.initializer as initializer
-import streamlit as st
-from utility.firebase_operations import add_action_to_db
+# import streamlit as st
+# from utility.firebase_operations import add_action_to_db
 
 # # initialize tracking
 # if 'tracking_active' not in st.session_state:

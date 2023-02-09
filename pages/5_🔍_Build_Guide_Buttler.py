@@ -1,5 +1,4 @@
 import streamlit as st
-from utility.firebase_operations import add_action_to_db
 import widgets.initializer as initializer
 from utility.plot_utility import get_img_with_href as get_img_with_href
 

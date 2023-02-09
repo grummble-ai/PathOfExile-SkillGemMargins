@@ -1,5 +1,4 @@
 import streamlit as st
-from utility.firebase_operations import add_action_to_db
 import widgets.initializer as initializer
 from PIL import Image
 from utility.data_handler import get_currency_value_in_c

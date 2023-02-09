@@ -153,14 +153,14 @@ def swap_df_columns(df, col1, col2):
     # return df_clensed, rows_removed_ind, rows_removed_names, final_val, final_weight, final_improvement
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache_data()
 def get_base64_of_bin_file(bin_file):
     with open(bin_file, 'rb') as f:
         data = f.read()
     return base64.b64encode(data).decode()
 
 
-@st.cache(allow_output_mutation=True)
+# @st.cache(allow_output_mutation=True)
 def get_img_with_href(local_img_path, target_url, max_width_percent: int):
     img_format = os.path.splitext(local_img_path)[-1].replace('.', '')
     bin_str = get_base64_of_bin_file(local_img_path)
