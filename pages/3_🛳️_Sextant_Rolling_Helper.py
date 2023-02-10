@@ -116,7 +116,7 @@ def create_part1():
 
     with colfourth:
         st.markdown(f"""
-                    3. Block these 3 Sextants mods on 3 of your voidstones: 
+                    3. **:red[Block]** these **:red[3 Sextants mods]** on 3 of your voidstones: 
                     - *{st.session_state.sextant_to_block[0]}*
                     - *{st.session_state.sextant_to_block[1]}*
                     - *{st.session_state.sextant_to_block[2]}*
@@ -176,19 +176,19 @@ def create_changelog():
     with st.expander("Changelog"):
         st.write("""
             **Version 0.10.0** (09th of February, 2023) \n
-            - Added math logic (linear optimization) to find the best sextants to block 
-            - Removed Gross 1 and Gross 2 as it was more confusing than helping
-            - Wrapped the result table into an expander
+            - Added math logic (linear optimization) to find the best sextants to block \n
+            - Removed Gross 1 and Gross 2 as it was more confusing than helping\n
+            - Wrapped the result table into an expander \n
             **Version 0.9.3** (31th of January, 2023) \n
-            - Reworked Section 2 "Check If Worth It" for more clarity
-            - Minor improvements to the UI
+            - Reworked Section 2 "Check If Worth It" for more clarity\n
+            - Minor improvements to the UI \n
             **Version 0.9.2** (7th of January, 2023) \n
-            - Added line breaks to mod description
-            - Improvements to visual clarity in the table
+            - Added line breaks to mod description\n
+            - Improvements to visual clarity in the table\n
             **Version 0.9.1** (7th of January, 2023) \n
-            - Fixed timestamp bug
+            - Fixed timestamp bug\n
             **Version 0.9.0** (7th of January, 2023) \n
-            - Added the basic functionalities
+            - Added the basic functionalities\n
         """)
 
 

@@ -97,7 +97,6 @@ def find_sextants_to_block(data, tot_weight):
     dv_select_items = {i: model.NewBoolVar("item_" + str(i)) for i in data["w_default"]}
 
     # constraint: remove exactly 3 items
-    # TODO: remove exactly 3 items; currently only 1 items to debug results
     model.Add(sum(dv_select_items[i] for i in dv_select_items) == num_items - 3)
 
     # ##### numerator equation ##### works yields 16750
