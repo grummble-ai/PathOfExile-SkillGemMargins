@@ -27,10 +27,12 @@ class VarArraySolutionPrinter(cp.CpSolverSolutionCallback):
 
 
 def load_TFTdata_from_github():
+    print(f"Requesting data from TFT Github")
     req = requests.get(URL_TFT_DATA)
     data = req.json()
     storage_path = dh.get_data_path(filename="sextant_data_tft.json", subf="app2")
     dh.write_json(data=data, file_path=storage_path)
+    print(f"Data from TFT Github saved \n")
 
 
 def add_html_colors_to_confidence_val(df):
@@ -49,6 +51,7 @@ def save_mixed_data(df):
 
 
 def mix_sextant_info_and_tft_data():
+    print(f"Starting to mix sextant info and tft data")
     path_info = dh.get_data_path(filename="raw_sextant_info.xlsx", subf="app2")
     df_raw = pd.read_excel(path_info, index_col="Nr")
 
@@ -61,6 +64,7 @@ def mix_sextant_info_and_tft_data():
     # exchange False and True with html spans including colors
     df = add_html_colors_to_confidence_val(df)
     save_mixed_data(df)
+    print(f"Mixed data saved")
 
 
 def exclude_minion_sextants___legacy():
@@ -169,7 +173,7 @@ def exclude_sextants():
     # drop unnecessary columns
     df = df_raw[['name', 'w_default', 'chaos', 'lowConfidence']]
 
-    tot_weight = df['w_default'].sum()
+    tot_weight = int(df['w_default'].sum())
     # # testing: drop all except first 6 rows
     # df = df.drop(range(5, 74))
 
@@ -189,6 +193,6 @@ def exclude_sextants():
     id, names = find_sextants_to_block(data, tot_weight)
 
     # # save the results
-    print(f"Saving results.")
+    print(f"Saving results")
     dh.write_json([list(id), names], dh.get_data_path(filename="sextants_to_block.json", subf="app2"))
-    print(f"Results succesfully saved.")
+    print(f"Results succesfully saved")
