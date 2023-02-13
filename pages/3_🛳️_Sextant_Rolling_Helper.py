@@ -37,12 +37,12 @@ def create_table():
     st.session_state.df_sliced = df
 
     # remove unwanted columns
-    df = df_drop_column(df, ["Level", "Line0", "Line1", "Line2", "Line3", "Spalte1", "lowConfidence",
+    df = df_drop_column(df, ["Level", "name", "Line0", "Line1", "Line2", "Line3", "Spalte1", "lowConfidence",
                              "w_has_atlas_mission", "w_hall_of_grandmasters", "ratio", "w_no_strongboxes",
                              "w_unique_map", "w_no_monster_packs", "w_no_boss", "w_map_has_blight",
                              "w_vault_of_atziri", "w_elder_occupied", "timestamp", "Item"])
 
-    df = swap_df_columns(df, "name", "icon")
+    df = swap_df_columns(df, "name_old", "icon")
 
     # rename df columns
     df = df_rename_columns(df, {"name_old": "Short Name",
