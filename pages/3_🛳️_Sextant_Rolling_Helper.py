@@ -45,7 +45,7 @@ def create_table():
     df = swap_df_columns(df, "name", "icon")
 
     # rename df columns
-    df = df_rename_columns(df, {"name": "Short Name",
+    df = df_rename_columns(df, {"name_old": "Short Name",
                                 "icon": "Icon",
                                 "full_text": "Description",
                                 "w_default": "Weighting",
