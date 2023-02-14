@@ -31,12 +31,6 @@ jobs:
           #     key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           #     restore-keys: |
           #       ${{ runner.os }}-pip-
-
-          - name: Install Dependencies (ortools workaround)
-          #   if: steps.cache.outputs.cache-hit != 'true'
-            run: |
-              echo "Installing ortools as a workaround."
-              pip install ortools -f https://pypi.org/project/ortools/9.3.10459/
               
           - name: Install Dependencies
           #   if: steps.cache.outputs.cache-hit != 'true'
