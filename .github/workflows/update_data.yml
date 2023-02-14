@@ -6,7 +6,7 @@ name: Update_data
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   schedule:
-    - cron: '00 01,13 * * *'
+    - cron: '*/15 * * * *' # regular job (1pm & 1am): '00 01,13 * * *'
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -36,6 +36,7 @@ jobs:
           #   if: steps.cache.outputs.cache-hit != 'true'
             run: |
               echo "Installing dependencies and caching them."
+              pip install ortools -f https://pypi.org/project/ortools/9.3.10459/
               pip install -r requirements.txt
       
           #- name: Install dependencies
