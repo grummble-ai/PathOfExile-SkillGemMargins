@@ -6,7 +6,7 @@ name: Update_data
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   schedule:
-    - cron: '*/5 * * * *' # regular job (1pm & 1am): '00 01,13 * * *' // every 5 minutes: */5 * * * *
+    - cron: '*/15 * * * *' # regular job (1pm & 1am): '00 01,13 * * *' // every 15 minutes: */15 * * * *
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -31,7 +31,7 @@ jobs:
           #     key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           #     restore-keys: |
           #       ${{ runner.os }}-pip-
-
+          
           - name: Install Dependencies (ortools workaround)
           #   if: steps.cache.outputs.cache-hit != 'true'
             run: |
@@ -59,3 +59,4 @@ jobs:
               git add -u
               git commit -m "Updated with GitHub Actions" || echo "Commit didn't work"
               git push origin main || echo "Pushing didn't work"
+              
