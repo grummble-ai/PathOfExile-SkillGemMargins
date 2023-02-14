@@ -14,10 +14,10 @@ def create_welcomepage():
 
     st.write('''
     Here's what you can find on this website: \n 
-    - [Tool Compilation](https://poeacademy.streamlit.app/Useful_Tools_(Compilation)): These are the tools that make PoE much more enjoyable to play
-    - [Sextant Rolling Helper](https://poeacademy.streamlit.app/Sextant_Rolling_Helper): Shows how profitable Sextant Rolling is with current prices
-    - [Skill Gem Leveling Helper](https://poeacademy.streamlit.app/Skill_Gem_Leveling_Helper): Shows what the most profitable gems to level are currently
-    - [Build Guides Buttler](https://poeacademy.streamlit.app/Build_Guides): potential new tool (visit for more info)
+    - 🧰 **[Tool Compilation](https://poeacademy.streamlit.app/Useful_Tools_(Compilation))**: These are the tools that make PoE much more enjoyable to play
+    - 🛳️ **[Sextant Rolling Helper](https://poeacademy.streamlit.app/Sextant_Rolling_Helper)**: Shows how profitable Sextant Rolling is with current prices
+    - 💎 **[Skill Gem Leveling Helper](https://poeacademy.streamlit.app/Skill_Gem_Leveling_Helper)**: Shows what the most profitable gems to level are currently
+    - 🔍 **[Build Guides Buttler](https://poeacademy.streamlit.app/Build_Guides)**: potential new tool (visit for more info). \n
     You can also just navigate by using the menu on the top of the sidebar. Sounds great? Great. ''')
 
     st.write('''
