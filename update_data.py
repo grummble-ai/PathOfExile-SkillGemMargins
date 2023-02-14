@@ -19,4 +19,4 @@ gem_margins.create_json_data()
 ############################################################
 load_TFTdata_from_github()
 mix_sextant_info_and_tft_data()
-exclude_sextants()
+# exclude_sextants()
