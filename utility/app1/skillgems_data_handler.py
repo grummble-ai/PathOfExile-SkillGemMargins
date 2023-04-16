@@ -151,6 +151,7 @@ def parse_category(json_data, category_name):
     timestamp = datetime.now().isoformat()
 
     if category_name == 'Currency':
+        # next(item for item in json_data["currencyDetails"] if item["name"] == "Divine Orb")
         divine_dict = next(item for item in json_data["lines"] if item["currencyTypeName"] == "Divine Orb")
         divine_price_in_chaos = divine_dict["chaosEquivalent"]
         save_divine_price(divine_price_in_chaos)
@@ -240,7 +241,7 @@ def request_current_league():
         leagues = response.json()
         print("Current leagues fetched from poe API:")
         print(leagues)
-        current_league = leagues[4]["id"]
+        current_league = leagues[8]["id"]
 
         with open(os.path.join(cwd, "data", "League.txt"), "w") as f:
             f.write(current_league)
