@@ -2,28 +2,28 @@ import json
 import requests
 import pandas as pd
 from .. import data_handler as dh
-# from ortools.sat.python import cp_model as cp
+from ortools.sat.python import cp_model as cp
 
 SAVE_FILE_NAME = "sextant_info_and_data.json"
 URL_TFT_DATA = "https://raw.githubusercontent.com/The-Forbidden-Trove/tft-data-prices/master/lsc/bulk-compasses.json"
 
-#
-# class VarArraySolutionPrinter(cp.CpSolverSolutionCallback):
-#     """Print intermediate solutions."""
-#
-#     def __init__(self, variables):
-#         cp.CpSolverSolutionCallback.__init__(self)
-#         self.__variables = variables
-#         self.__solution_count = 0
-#
-#     def on_solution_callback(self):
-#         self.__solution_count += 1
-#         for v in self.__variables:
-#             print('%s=%i' % (v, self.Value(v)), end=' ')
-#         print()
-#
-#     def solution_count(self):
-#         return self.__solution_count
+
+class VarArraySolutionPrinter(cp.CpSolverSolutionCallback):
+    """Print intermediate solutions."""
+
+    def __init__(self, variables):
+        cp.CpSolverSolutionCallback.__init__(self)
+        self.__variables = variables
+        self.__solution_count = 0
+
+    def on_solution_callback(self):
+        self.__solution_count += 1
+        for v in self.__variables:
+            print('%s=%i' % (v, self.Value(v)), end=' ')
+        print()
+
+    def solution_count(self):
+        return self.__solution_count
 
 
 def load_TFTdata_from_github():
