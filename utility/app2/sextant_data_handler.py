@@ -2,7 +2,7 @@ import json
 import requests
 import pandas as pd
 from .. import data_handler as dh
-from ortools.sat.python import cp_model as cp
+# from ortools.sat.python import cp_model as cp
 
 SAVE_FILE_NAME = "sextant_info_and_data.json"
 URL_TFT_DATA = "https://raw.githubusercontent.com/The-Forbidden-Trove/tft-data-prices/master/lsc/bulk-compasses.json"
