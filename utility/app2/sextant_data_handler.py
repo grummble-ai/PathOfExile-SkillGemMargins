@@ -2,7 +2,7 @@ import json
 import requests
 import pandas as pd
 from .. import data_handler as dh
-# from ortools.sat.python import cp_model as cp
+from ortools.sat.python import cp_model as cp
 
 SAVE_FILE_NAME = "sextant_info_and_data.json"
 URL_TFT_DATA = "https://raw.githubusercontent.com/The-Forbidden-Trove/tft-data-prices/master/lsc/bulk-compasses.json"
@@ -160,39 +160,39 @@ def find_sextants_to_block(data, tot_weight):
     # print(f"names: {names}")
     return ids, names
 
-#
-# def exclude_sextants():
-#     # declare data type for dataframe entries
-#     dtypes = {'name': 'str',
-#               'w_default': 'int64',
-#               'chaos': 'int64'}
-#
-#     path_data = dh.get_data_path(filename="sextant_info_and_data.json", subf="app2")
-#     df_raw = pd.read_json(path_data)
-#
-#     # drop unnecessary columns
-#     df = df_raw[['name', 'w_default', 'chaos', 'lowConfidence']]
-#
-#     tot_weight = int(df['w_default'].sum())
-#     # # testing: drop all except first 6 rows
-#     # df = df.drop(range(5, 74))
-#
-#     # set datatypes of df columns
-#     df = df.astype(dtypes)
-#     # create dict of dict from dataframe
-#     df_to_dict = df.to_dict(orient="list")
-#
-#     # create dict from each entry with index as key
-#     dict_name = {v: k for v, k in enumerate(df_to_dict["name"])}
-#     dict_weighting = {v: k for v, k in enumerate(df_to_dict["w_default"])}
-#     dict_price = {v: k for v, k in enumerate(df_to_dict["chaos"])}
-#     # add all dicts together to a single one
-#     data = {'name': dict_name, 'w_default': dict_weighting, 'chaos': dict_price}
-#
-#     # run the optimization
-#     id, names = find_sextants_to_block(data, tot_weight)
-#
-#     # # save the results
-#     print(f"Saving results")
-#     dh.write_json([list(id), names], dh.get_data_path(filename="sextants_to_block.json", subf="app2"))
-#     print(f"Results succesfully saved")
+
+def exclude_sextants():
+    # declare data type for dataframe entries
+    dtypes = {'name': 'str',
+              'w_default': 'int64',
+              'chaos': 'int64'}
+
+    path_data = dh.get_data_path(filename="sextant_info_and_data.json", subf="app2")
+    df_raw = pd.read_json(path_data)
+
+    # drop unnecessary columns
+    df = df_raw[['name', 'w_default', 'chaos', 'lowConfidence']]
+
+    tot_weight = int(df['w_default'].sum())
+    # # testing: drop all except first 6 rows
+    # df = df.drop(range(5, 74))
+
+    # set datatypes of df columns
+    df = df.astype(dtypes)
+    # create dict of dict from dataframe
+    df_to_dict = df.to_dict(orient="list")
+
+    # create dict from each entry with index as key
+    dict_name = {v: k for v, k in enumerate(df_to_dict["name"])}
+    dict_weighting = {v: k for v, k in enumerate(df_to_dict["w_default"])}
+    dict_price = {v: k for v, k in enumerate(df_to_dict["chaos"])}
+    # add all dicts together to a single one
+    data = {'name': dict_name, 'w_default': dict_weighting, 'chaos': dict_price}
+
+    # run the optimization
+    id, names = find_sextants_to_block(data, tot_weight)
+
+    # # save the results
+    print(f"Saving results")
+    dh.write_json([list(id), names], dh.get_data_path(filename="sextants_to_block.json", subf="app2"))
+    print(f"Results succesfully saved")
