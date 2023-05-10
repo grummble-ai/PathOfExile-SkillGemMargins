@@ -9,11 +9,10 @@ from utility.plot_utility import df_drop_column, load_mixed_data, df_rename_colu
 
 SUBHEADER = '''This tool is still being tested. 
             Please [report any bugs / feedback to me](https://discord.gg/KHakZVKPRu).'''
-VERSION = "0.10.0"
+VERSION = "1.0.0"
 
 
 def create_table():
-    #TODO: it seems that all additional monster sextants are missing although I'm just blocking 3 of them?
     #############
     # preparation
     #############
@@ -175,6 +174,8 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 1.0.0** (10th of May, 2023) \n
+            - Fixed dependencies error from ortools and streamlit. \n
             **Version 0.10.0** (09th of February, 2023) \n
             - Added math logic (linear optimization) to find the best sextants to block \n
             - Removed Gross 1 and Gross 2 as it was more confusing than helping\n
