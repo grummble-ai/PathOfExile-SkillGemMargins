@@ -5,8 +5,9 @@
       <sourceFolder url="file://$MODULE_DIR$/venv" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/venv_fresh" />
+      <excludeFolder url="file://$MODULE_DIR$/venv_23_05_10" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.10 (PathOfExile-SkillGemMargins) (2)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.10 (PathOfExile-SkillGemMargins) (3)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyNamespacePackagesService">
