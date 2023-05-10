@@ -56,10 +56,11 @@ def create_table():
 
 
 def create_part1():
-    image = Image.open("img/Under-Construction.png")
-    st.image(image, width=300)
+    # image = Image.open("img/Under-Construction.png")
+    # st.image(image, width=300)
+    #
+    # st.markdown("-----")
 
-    st.markdown("-----")
     # Settings
     colfirst, ph1, colsecond, ph2, colthird, ph3, colfourth = st.columns([2, 0.5, 2, 0.5, 2, 0.5, 2])
 
