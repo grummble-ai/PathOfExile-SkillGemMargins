@@ -7,13 +7,11 @@ from utility.plot_utility import df_drop_column, load_mixed_data, df_rename_colu
     keep_rows_depending_on_conent_of_column, calc_exp_val_sextants, timestamp_to_date, \
     block_sextants, convert_df_with_icon, swap_df_columns, get_low_confidence_count
 
-SUBHEADER = '''This tool is still being tested. 
-            Please [report any bugs / feedback to me](https://discord.gg/KHakZVKPRu).'''
-VERSION = "0.10.0"
+SUBHEADER = '''This tool is new and may contain bugs. Please [report any bugs / feedback to me](https://discord.gg/KHakZVKPRu).'''
+VERSION = "1.0.0"
 
 
 def create_table():
-    #TODO: it seems that all additional monster sextants are missing although I'm just blocking 3 of them?
     #############
     # preparation
     #############
@@ -57,10 +55,11 @@ def create_table():
 
 
 def create_part1():
-    image = Image.open("img/Under-Construction.png")
-    st.image(image, width=300)
+    # image = Image.open("img/Under-Construction.png")
+    # st.image(image, width=300)
+    #
+    # st.markdown("-----")
 
-    st.markdown("-----")
     # Settings
     colfirst, ph1, colsecond, ph2, colthird, ph3, colfourth = st.columns([2, 0.5, 2, 0.5, 2, 0.5, 2])
 
@@ -71,12 +70,12 @@ def create_part1():
                     # value=st.session_state.hide_low_confidence,
                     key="hide_low_confidence")
 
-        st.slider(label="I am confident this many rolls will sell:",
+        st.slider(label="I am confident this amount of __best__ rolls will sell:",
                   max_value=st.session_state.cnt_sextants,
                   key="nr_results")
         st.caption(
-            "75/75 would mean that you are confident that all rolls sell; 25/75 means that the most expensive 33% "
-            "would sell.")
+            "75/75 would mean that you are confident that all rolls sell; 25/75 means that the best (=most expensive) "
+            "25 out of all 75 would sell. A smaller number means less hustle to sell, but also less profit.")
 
     with colsecond:
         exp_val_sliced, total_weights_sliced = calc_exp_val_sextants(st.session_state.df_sliced,
@@ -96,14 +95,35 @@ def create_part1():
             net_color = ":red["
 
         st.markdown(
-            "Avg. __Net__ Profit = **" + net_color + str(round(exp_val_sliced - st.session_state.price_awk - 1, 2))
+            "Avg. __net__ profit / sextant = **" + net_color + str(round(exp_val_sliced - st.session_state.price_awk - 1, 2))
             + "]** " + str(st.session_state.html_chaos),
             unsafe_allow_html=True)
         st.caption(f"Your average profit. It considers your preferences on the left, blocking the 3 sextants on the "
-                   f"right and your expenditures for rolling: "
+                   f"right and your expenditures for rolling. "
                    f"_Net = Gross - Awk. Sextant Price - Surveyor's Compass Price = " +
                    str(round(exp_val_sliced, 2)) + "C - " +
                    str(st.session_state.price_awk) + "C - 1C_")
+
+        avg_net_profit = round(exp_val_sliced - st.session_state.price_awk - 1, 2)
+        return_chaos = round(100 * st.session_state.price_div / st.session_state.price_awk * avg_net_profit, 1)
+        return_div = round(return_chaos / st.session_state.price_div, 2)
+
+        st.markdown("__Profit__ for a __large__ sample size: ")
+        st.markdown("100 div invest ⇒ **" +
+                    net_color + str(return_div) + "]** " +
+                    str(st.session_state.html_divine) + " profit",
+                    unsafe_allow_html=True)
+
+        st.caption(
+            "100 * price div in c / price awk. sextants in c * avg. net profit per sextant = 100 * " +
+            str(st.session_state.price_div) + " / " +
+            str(st.session_state.price_awk) + " * " +
+            str(avg_net_profit) + " = " +
+            str(return_chaos) + "c = " +
+            str(return_div) + "div",
+            # str(round(exp_val_sliced - st.session_state.price_awk - 1, 2)) +
+            # str(st.session_state.html_chaos),
+            unsafe_allow_html=True)
 
     with colthird:
         st.subheader("3️ Roll Instructions")
@@ -175,6 +195,10 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 1.0.0** (10th of May, 2023) \n
+            - Fixed dependencies error from ortools and streamlit. \n
+            - Added an profit indicator for large sample sizes \n
+            - Improved descriptions in preferences and profitability check \n
             **Version 0.10.0** (09th of February, 2023) \n
             - Added math logic (linear optimization) to find the best sextants to block \n
             - Removed Gross 1 and Gross 2 as it was more confusing than helping\n
