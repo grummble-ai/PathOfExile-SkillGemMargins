@@ -10,14 +10,14 @@ from utility.app2.sextant_data_handler import load_TFTdata_from_github, mix_sext
 # Skill gems
 ############################################################
 # get data from poe.ninja and save to db
-data_handler.load_all_categories()
+# data_handler.load_all_categories()
 # create the df from poe.ninja data
-gem_margins.create_json_data()
+# gem_margins.create_json_data()
 
 
 ############################################################
 # sextants
 ############################################################
-load_TFTdata_from_github()
-mix_sextant_info_and_tft_data()
+# load_TFTdata_from_github()
+# mix_sextant_info_and_tft_data()
 exclude_sextants()
