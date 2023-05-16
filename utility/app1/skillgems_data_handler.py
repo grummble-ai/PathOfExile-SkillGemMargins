@@ -267,7 +267,7 @@ def load_league():
 
 
 def last_update():
-    path = get_path(filename="History.txt")
+    path = get_path(filename="history_gems.txt")
     with open(path, "r") as f:
         date = f.readlines()[-1]
     return date
@@ -338,7 +338,7 @@ def save_json(data):
     path_data = get_path(filename="data.json", subf="app1")
     with open(path_data, 'w+') as outfile:
         json.dump(data, outfile)
-    path_history = get_path(filename='History.txt')
+    path_history = get_path(filename='history_gems.txt')
     with open(path_history, 'a') as record:
         record.write(f'\n {datetime.now().strftime("%d.%m.%Y, %H:%M")}')
 
