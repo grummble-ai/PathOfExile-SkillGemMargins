@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Update_data
+name: update_gem_data
 
 # Controls when the workflow will run
 on:
@@ -23,21 +23,7 @@ jobs:
             with:
               python-version: 3.11 #install the python needed
               cache: 'pip' # caching pip dependencies 
-              
-          # - uses: actions/cache@v3
-          #   id: cache
-          #   with:
-          #     path: ~/.cache/pip
-          #     key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          #     restore-keys: |
-          #       ${{ runner.os }}-pip-
-          
-#          - name: Install Dependencies (ortools workaround)
-#          #   if: steps.cache.outputs.cache-hit != 'true'
-#            run: |
-#              echo "Installing ortools as a workaround."
-#              pip install ortools -f https://pypi.org/project/ortools/9.3.10459/
-              
+
           - name: Install Dependencies
           #   if: steps.cache.outputs.cache-hit != 'true'
             run: |
@@ -50,13 +36,13 @@ jobs:
               
           - name: execute python script skillgems # run the run.py to get the latest data
             run: |
-              python update_data.py
+              python update_gem_data.py
               
           - name: Commit and Push Changes
             run: |
               git config user.name "grummble-ai"
               git config user.email "73717764+grummble-ai@users.noreply.github.com"
               git add -u
-              git commit -m "Updated with GitHub Actions" || echo "Commit didn't work"
+              git commit -m "Updated skill gem data with GitHub Actions" || echo "Commit didn't work"
               git push origin main || echo "Pushing didn't work"
               
