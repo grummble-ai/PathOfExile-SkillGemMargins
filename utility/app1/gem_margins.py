@@ -288,12 +288,14 @@ def create_json_data():
 
     # --- currency ---
     C_TO_DIV = data_cur[data_cur['name'] == "Divine Orb"]['value_chaos'].values[0]
+    C_TO_VAAL = data_cur[data_cur['name'] == "Vaal Orb"]['value_chaos'].values[0]
 
     # --- gems ---
     # sort gems
     df = data_gem.sort_values(['skill', 'qualityType', 'gemLevel'], ascending=[True, True, False])
 
-    # add gem type, i.e. Enlighten -> Exceptional; types: regular, awakened, exceptional, special (blood and sand & brand recall)
+    # add gem type, i.e. Enlighten -> Exceptional; types: regular, awakened, exceptional, special (blood and sand &
+    # brand recall)
     df["gem_type"] = ""
     df = add_gem_types(df)
 
@@ -301,7 +303,6 @@ def create_json_data():
     df = df[~df.name.str.contains("Vaal")]
 
     # df["gem_info"] = ""
-
     df["gem_level_base"] = ""
     df["gem_quality_base"] = ""
     df["upgrade_path"] = ""
@@ -317,7 +318,6 @@ def create_json_data():
     df["gem_color"] = ""
     df["query_url"] = ""
     df["query_html"] = ""
-
 
     df = calculate_chaos_values(df)
 
