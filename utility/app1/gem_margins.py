@@ -284,6 +284,7 @@ def create_json_data():
     data_cur = pd.DataFrame.from_dict(dict_cur, orient="index")
     dict_gem = dh.load_raw_dict(type="Gems")
     data_gem = pd.DataFrame.from_dict(dict_gem, orient="index")
+    df_raw = data_gem
 
     # --- currency ---
     C_TO_DIV = data_cur[data_cur['name'] == "Divine Orb"]['value_chaos'].values[0]
@@ -291,11 +292,16 @@ def create_json_data():
     # --- gems ---
     # sort gems
     df = data_gem.sort_values(['skill', 'qualityType', 'gemLevel'], ascending=[True, True, False])
+
+    # add gem type, i.e. Enlighten -> Exceptional; types: regular, awakened, exceptional, special (blood and sand & brand recall)
+    df["gem_type"] = ""
+    df = add_gem_types(df)
+
     # remove vaal skill gems
     df = df[~df.name.str.contains("Vaal")]
 
     # df["gem_info"] = ""
-    df["gem_type"] = ""
+
     df["gem_level_base"] = ""
     df["gem_quality_base"] = ""
     df["upgrade_path"] = ""
@@ -312,7 +318,6 @@ def create_json_data():
     df["query_url"] = ""
     df["query_html"] = ""
 
-    df = add_gem_types(df)
 
     df = calculate_chaos_values(df)
 
