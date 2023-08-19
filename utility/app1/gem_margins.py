@@ -63,8 +63,8 @@ def calculate_chaos_values(df):
     # create a new dataframe with all columns that will be filled using the loop below
     df_analyzed = df[0:0]
 
+    # iterate trough every gem in the gem list (e.g. Lightning Strike, Hatred, ...)
     for idx, gems in enumerate(names):
-        # iterate trough every gem in the gem list (e.g. Lightning Strike, Hatred, ...)
         df_ = df[df['name'] == gems]
 
         # find the cheapest entry in the group and use it as a basis
@@ -79,7 +79,7 @@ def calculate_chaos_values(df):
         # iterate through every single gem entry for a give gem (e.g. 8/0, 16/0 and 20/20 for Lightning Strike)
         for i in range(df_.shape[0]):
             df_gem = df_.iloc[[i]]
-            # calculate the important metrics
+            # calculate economic values
             buy_c = df_min["value_chaos"].values[0]
             sell_c = df_gem["value_chaos"].values[0]
             margin_c = sell_c - buy_c
@@ -288,20 +288,21 @@ def create_json_data():
 
     # --- currency ---
     C_TO_DIV = data_cur[data_cur['name'] == "Divine Orb"]['value_chaos'].values[0]
+    C_TO_VAAL = data_cur[data_cur['name'] == "Vaal Orb"]['value_chaos'].values[0]
 
     # --- gems ---
     # sort gems
     df = data_gem.sort_values(['skill', 'qualityType', 'gemLevel'], ascending=[True, True, False])
 
-    # add gem type, i.e. Enlighten -> Exceptional; types: regular, awakened, exceptional, special (blood and sand & brand recall)
+    # add gem type, i.e. Enlighten -> Exceptional; types: regular, awakened, exceptional, special (blood and sand &
+    # brand recall)
     df["gem_type"] = ""
     df = add_gem_types(df)
 
     # remove vaal skill gems
     df = df[~df.name.str.contains("Vaal")]
 
-    # df["gem_info"] = ""
-
+    # add more fields to dataframe
     df["gem_level_base"] = ""
     df["gem_quality_base"] = ""
     df["upgrade_path"] = ""
@@ -317,7 +318,6 @@ def create_json_data():
     df["gem_color"] = ""
     df["query_url"] = ""
     df["query_html"] = ""
-
 
     df = calculate_chaos_values(df)
 
