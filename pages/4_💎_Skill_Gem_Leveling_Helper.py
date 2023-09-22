@@ -5,7 +5,7 @@ import widgets.initializer as initializer
 from utility.plot_utility import df_get_max_col
 
 TITLE = "Skill Gem Leveling Helper"
-VERSION = "v1.2.1"
+VERSION = "v1.2.2"
 
 # TODO: Finish settings and add button to site that can restore default settings // Could be done with sessionstate
 DEFAULT_SETTINGS = {
@@ -259,7 +259,7 @@ def drop_gem_types(df, alt_gem, awaken, exception):
     return df
 
 
-@st.cache
+@st.cache_data
 def create_rawdata(df):
     # ui elements
     create_top_table_img(df, hide_conf=False, nr_conf=0, hide_corr=False,
@@ -314,6 +314,8 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 1.2.2** (08th of February, 2023) \n
+            - Improved caching to make the app less resource intensive globally
             **Version 1.2.1** (08th of February, 2023) \n
             - Fixed a bug regarding the preferences: buy chaos (maximum)
             **Version 1.2.0** (07th of February, 2023) \n
@@ -371,11 +373,17 @@ def session_state_variables(df):
         st.session_state.roi_max = roi_max
 
 
+@st.cache_data
 def load_data():
     dict_gem = dh.load_json()
-    df = pd.DataFrame.from_dict(dict_gem, orient="index")
-    session_state_variables(df)
-    return df
+    df_raw = pd.DataFrame.from_dict(dict_gem, orient="index")
+    return df_raw
+
+
+def raw_data():
+    df_raw = load_data()
+    session_state_variables(df_raw)
+    return df_raw
 
 
 SUBHEADER = '''
@@ -385,5 +393,5 @@ SUBHEADER = '''
 
 initializer.create_boilerplate(pagetitle=TITLE, version=VERSION, subheader=SUBHEADER)
 
-df = load_data()
+df = raw_data()
 create_top(df)

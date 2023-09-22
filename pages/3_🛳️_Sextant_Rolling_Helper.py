@@ -223,9 +223,15 @@ def create_site():
     create_changelog()
 
 
+@st.cache_data
+def load_data():
+    df_raw = load_mixed_data()
+    return df_raw
+
+
 def sessionstate_init():
     # set default values
-    df_raw = load_mixed_data()
+    df_raw = load_data()
     if 'df_raw' not in st.session_state:
         st.session_state.df_raw = df_raw
 
@@ -278,7 +284,6 @@ def sessionstate_init():
         st.session_state.html_table = ""
 
 
-#
 initializer.create_boilerplate(pagetitle="Sextant Rolling Helper", version=VERSION, subheader=SUBHEADER)
 
 # initialize session state
