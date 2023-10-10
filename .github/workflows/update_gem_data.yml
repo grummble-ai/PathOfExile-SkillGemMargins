@@ -43,6 +43,7 @@ jobs:
               git config user.name "grummble-ai"
               git config user.email "73717764+grummble-ai@users.noreply.github.com"
               git add -u
+              git pull main
               git commit -m "Updated skill gem data with GitHub Actions" || echo "Commit didn't work"
               git push origin main || echo "Pushing didn't work"
               
