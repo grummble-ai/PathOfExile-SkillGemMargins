@@ -44,5 +44,5 @@ jobs:
               git config user.email "73717764+grummble-ai@users.noreply.github.com"
               git add -u || echo "Adding didn't work"
               git commit -m "Commit skill gem data with GitHub Actions" || echo "Commit didn't work"
-              git push -f origin main "Push skill gem data with GitHub Actions" || echo "Pushing didn't work"
+              git push -f origin main || echo "Pushing didn't work"
               
