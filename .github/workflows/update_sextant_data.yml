@@ -44,5 +44,5 @@ jobs:
               git config user.email "73717764+grummble-ai@users.noreply.github.com"
               git add -u
               git commit -m "Updated sextant data with GitHub Actions" || echo "Commit didn't work"
-              git push origin main || echo "Pushing didn't work"
+              git push -f origin main || echo "Pushing didn't work"
               
