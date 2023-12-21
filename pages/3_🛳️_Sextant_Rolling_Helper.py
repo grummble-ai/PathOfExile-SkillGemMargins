@@ -64,7 +64,7 @@ def create_part1():
     colfirst, ph1, colsecond, ph2, colthird, ph3, colfourth = st.columns([2, 0.5, 2, 0.5, 2, 0.5, 2])
 
     with colfirst:
-        st.subheader("1️  Preferences")
+        st.subheader("1️⃣ Preferences")
         st.markdown("Low Confidence:")
         st.checkbox(label="Exclude Low Confidence Sextants",
                     # value=st.session_state.hide_low_confidence,
@@ -81,7 +81,7 @@ def create_part1():
         exp_val_sliced, total_weights_sliced = calc_exp_val_sextants(st.session_state.df_sliced,
                                                                      st.session_state.df_blocked)
 
-        st.subheader("2️ Check Profitability")
+        st.subheader("2️⃣ Check Profitability")
 
         if round(exp_val_sliced, 2):
             gross_color = ":green["
@@ -126,7 +126,7 @@ def create_part1():
             unsafe_allow_html=True)
 
     with colthird:
-        st.subheader("3️ Roll Instructions")
+        st.subheader("3️⃣ Roll Instructions")
         st.markdown("""
                             1. You need **:red[4]** voidstones
                             2. Allocate the Atlas passive **:red[Enduring Influence]** for 4 instead of 3 uses:
@@ -149,7 +149,7 @@ def create_part1():
 
 
 def create_part2():
-    st.subheader("4️ Itemize Roll Whenever You Hit One Of The Mods Below:")
+    st.subheader("4️⃣ Itemize Roll Whenever You Hit One Of The Mods Below:")
     st.caption("_The table below updates automatically after changing your preferences._\n")
 
     with st.expander("Sextant Rolls Sorted By Price (click to expand/close)", expanded=True):
