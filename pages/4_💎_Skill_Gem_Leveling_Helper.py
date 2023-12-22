@@ -5,7 +5,8 @@ import widgets.initializer as initializer
 from utility.plot_utility import df_get_max_col
 
 TITLE = "Skill Gem Leveling Helper"
-VERSION = "v1.2.2"
+VERSION = "v2.0.0"
+NO_RESULTS = 20
 
 # TODO: Finish settings and add button to site that can restore default settings // Could be done with sessionstate
 DEFAULT_SETTINGS = {
@@ -36,10 +37,9 @@ def create_top(df):
     #                  viewer_id=st.session_state.viewer_id,
     #                  document=u"actions_skillgemleveling")
 
-    st.subheader("1️ Set your Preferences")
-
+    st.subheader("1️⃣ Set your Preferences")
     # Settings
-    colfirst, ph1, colsecond, ph2, colthird, ph3, colfourth = st.columns([2, 0.5, 2, 0.5, 2, 0.5, 2])
+    colfirst, ph1, colsecond, ph2, colfourth, ph3 = st.columns([1, 0.5, 0.8, 0.5, 1, 0.5])
 
     with colfirst:
         st.caption("Gems to hide:")
@@ -51,17 +51,17 @@ def create_top(df):
 
     with colsecond:
         st.caption("Gem colors to show:")
-        green = st.checkbox('Green Gems (Dexterity)', value=DEFAULT_SETTINGS["show_gem_color_green"])
-        red = st.checkbox('Red Gems (Strength)', value=DEFAULT_SETTINGS["show_gem_color_red"])
-        blue = st.checkbox('Blue Gems (Intelligence)', value=DEFAULT_SETTINGS["show_gem_color_blue"])
+        green = st.checkbox('Gems (🟢 Dexterity)', value=DEFAULT_SETTINGS["show_gem_color_green"])
+        red = st.checkbox('Gems (🔴 Strength)', value=DEFAULT_SETTINGS["show_gem_color_red"])
+        blue = st.checkbox('Gems (🔵 Intelligence)', value=DEFAULT_SETTINGS["show_gem_color_blue"])
         gem_colors = [green, red, blue]
 
-    with colthird:
-        st.caption("Gem types to show:")
-        alt_gems = st.checkbox('Alt. Gems (Phantasmal etc.)', value=DEFAULT_SETTINGS["show_gem_type_alt"])
-        awakened = st.checkbox('Awakened Gems', value=DEFAULT_SETTINGS["show_gem_type_awk"])
-        exceptional = st.checkbox('Exceptional Gems (Enlighten etc.)', value=DEFAULT_SETTINGS["show_gem_type_exc"])
-        gem_types = [alt_gems, awakened, exceptional]
+    # with colthird:
+    #     st.caption("Gem types to show:")
+    #     alt_gems = st.checkbox('Alt. Gems (Phantasmal etc.)', value=DEFAULT_SETTINGS["show_gem_type_alt"])
+    #     awakened = st.checkbox('Awakened Gems', value=DEFAULT_SETTINGS["show_gem_type_awk"])
+    #     exceptional = st.checkbox('Exceptional Gems (Enlighten etc.)', value=DEFAULT_SETTINGS["show_gem_type_exc"])
+    #     gem_types = [alt_gems, awakened, exceptional]
 
     with colfourth:
         # st.caption("Miscellaneous:")
@@ -75,30 +75,30 @@ def create_top(df):
                                 value=0,
                                 max_value=st.session_state.buy_chaos_max-2,
                                 step=1)
-        max_c = st.number_input('Buy Chaos (Maximum):',
-                                min_value=0,
-                                max_value=st.session_state.buy_chaos_max_limit,
-                                key="buy_chaos_max",
-                                step=1)
+        # max_c = st.number_input('Buy Chaos (Maximum):',
+        #                         min_value=0,
+        #                         max_value=st.session_state.buy_chaos_max_limit,
+        #                         key="buy_chaos_max",
+        #                         step=1)
 
     st.write("_The table below updates automatically when you make changes to your preferences._\n")
 
     st.markdown("---")
-    st.subheader("2️ Check the Best Results")
+    st.subheader(f"2️⃣ Check the Top {NO_RESULTS} Results")
 
     tab1, tab2, tab3 = st.tabs(["💰 Results Sorted by Normalized Margin", "💎 Results Sorted by Margin",
                                 "💸 Results Sorted by Return of Investment"])
     with tab1:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
-                             hide_qual=hide_quality_gems, gem_colors=gem_colors, gem_types=gem_types, min_c=min_c,
+                             hide_qual=hide_quality_gems, gem_colors=gem_colors, min_c=min_c,
                              min_roi=min_roi, mode="margin_rel")
     with tab2:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
-                             hide_qual=hide_quality_gems, gem_colors=gem_colors, gem_types=gem_types, min_c=min_c,
+                             hide_qual=hide_quality_gems, gem_colors=gem_colors, min_c=min_c,
                              min_roi=min_roi, mode="margin")
     with tab3:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
-                             hide_qual=hide_quality_gems, gem_colors=gem_colors, gem_types=gem_types, min_c=min_c,
+                             hide_qual=hide_quality_gems, gem_colors=gem_colors, min_c=min_c,
                              min_roi=min_roi, mode="roi")
 
     LEAGUE = dh.load_league()
@@ -147,7 +147,7 @@ def column_title_link_to_html(type: str, text: str):
     return html
 
 
-def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_colors, gem_types, min_roi, min_c, mode):
+def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_colors, min_roi, min_c, mode):
     # various filters
     # filter: low confidence
     if hide_conf:
@@ -167,9 +167,9 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
     # gem_colors = [green, red, blue]
     df_top10 = drop_gem_colors(df_top10, green=gem_colors[0], red=gem_colors[1], blue=gem_colors[2])
 
-    # filter: gem type
-    # gem_types = [alt_gems, awakened, exceptional]
-    df_top10 = drop_gem_types(df_top10, alt_gem=gem_types[0], awaken=gem_types[1], exception=gem_types[2])
+    # # filter: gem type
+    # # gem_types = [alt_gems, awakened, exceptional]
+    # df_top10 = drop_gem_types(df_top10, alt_gem=gem_types[0], awaken=gem_types[1], exception=gem_types[2])
 
     # filter: min buy chaos
     df_top10 = df_top10[df_top10["buy_c"] >= min_c]
@@ -183,20 +183,19 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
 
     # show only the 10 best results
     if mode == "margin":
-        df_top10 = df_top10.nlargest(10, "margin_divine", keep="first")
+        df_top10 = df_top10.nlargest(NO_RESULTS, "margin_divine", keep="first")
     elif mode == "margin_rel":
         # grab the 10 best gems to level by margin
-        df_top10 = df_top10.nsmallest(10, "ranking_from_margin_gem_specific", keep="first")
+        df_top10 = df_top10.nsmallest(NO_RESULTS, "ranking_from_margin_gem_specific", keep="first")
     elif mode == "roi":
         # grab the 10 best gems to level by roi
-        df_top10 = df_top10.nsmallest(10, "ranking_from_roi", keep="first")
+        df_top10 = df_top10.nsmallest(NO_RESULTS, "ranking_from_roi", keep="first")
 
     # drop unnecessary columns
     df_top10 = df_top10.drop(["value_chaos", "value_divine", "created", "datetime", "corrupted", "qualityType",
                               "skill", "gemQuality", "gem_type", "gemLevel", "levelRequired", "query_url",
-                              "gem_level_base",
-                              "gem_quality_base", "margin_c", "gem_color", "ranking_from_roi",
-                              "ranking_from_margin_gem_specific"], axis=1)
+                              "gem_level_base", "gem_quality_base", "margin_c", "gem_color", "ranking_from_roi",
+                              "base_gem", "discriminator", "ranking_from_margin_gem_specific"], axis=1)
 
     truncate_list = ["buy_divine", "sell_divine", "margin_divine", "margin_gem_specific", "roi"]
     for col in truncate_list:
@@ -204,8 +203,6 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
 
     # reindex icon url and name to show the icon first
     df_top10 = swap_df_columns(df_top10, "name", "icon_url")
-
-    chaos_test = 'Buy <img src="' + "https://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1" + '" width="25" >'
 
     df_top10 = df_top10.rename(columns={"name": "Skill Gem",
                                         "icon_url": "Icon",
@@ -221,7 +218,6 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
                                         "listing_count": "No. Listings",
                                         "query_html": "Link"
                                         })
-
     html = convert_df(df_top10)
     st.markdown(
         html,
@@ -314,6 +310,15 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 2.0.0 (experimental)** (22th of December, 2023) \n
+            - Fixed issues that came with the new transfigured gems (gem tags, trade website queries)
+            - Minor improvements to the UI 
+            - Removed alternate quality gem filters as these are legacy now
+            **Version 1.2.3** (08th of February, 2023) \n
+            - The app now shows the best 15 results instead of 10
+            - Preparation for gem recipe update (gcp recipe does not work with skill gems anymore)
+            - Removed the ability to search for alternate quality gem types
+            - Improved UI (icons, layout) 
             **Version 1.2.2** (08th of February, 2023) \n
             - Improved caching to make the app less resource intensive globally
             **Version 1.2.1** (08th of February, 2023) \n
@@ -388,7 +393,11 @@ def raw_data():
 
 SUBHEADER = '''
             Hey exile, this tool shows you the best skill gems to level for profit! The data from [poe.ninja](https://poe.ninja/)
-            is updated automatically every day. Start by setting your preferences **(1️)** and then check the results **(2️)**! 
+            is updated automatically every day. Start by setting your preferences **(1️)** and then check the results **(2️)**! \n 
+            **:red[Attention: I have updated the app but didn't have the time to iron out all bugs that came with significant 
+            changes to the way the new gems are handled by the official trade website. ]**
+            **:red[Watch out when you follow the trade link, and please report any bugs you find to me on discord / github!
+            Will devote more time to the project after New Year's Eve.]**   
             '''
 
 initializer.create_boilerplate(pagetitle=TITLE, version=VERSION, subheader=SUBHEADER)
