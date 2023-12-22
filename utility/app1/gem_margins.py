@@ -1,5 +1,5 @@
 import os
-
+import warnings
 import pandas as pd
 from utility.app1 import skillgems_data_handler as dh
 from os import path
@@ -33,19 +33,40 @@ def get_ex_value(df):
     return df
 
 
-def add_gem_colors(df):
-    df_colors = pd.read_excel(path.join(os.getcwd(), "utility", "app1", "gem_colors.xlsx"))
-    # drop zeros from excel
-    df_colors[(df_colors != 0).all(1)]
-    df_colors = df_colors[~(df_colors == 0).any(axis=1)]
-    gem_colors = df_colors.values.tolist()
-    for gem in gem_colors:
-        df.loc[df['skill'] == gem[0], 'gem_color'] = gem[1]
+def load_gem_info():
+    df = pd.read_excel(path.join(os.getcwd(), "utility", "app1", "gem_colors_323.xlsx"))
     return df
 
 
-def add_gem_types(df):
-    df['gem_type'] = "regular"
+def add_gem_colors(df):
+    df_colors = load_gem_info()
+    gem_colors = df_colors.values.tolist()
+
+    for gem in gem_colors:
+        df.loc[df['skill'] == gem[0], 'gem_color'] = gem[1]
+        df.loc[df['skill'] == gem[0], 'base_gem'] = gem[3]
+        df.loc[df['skill'] == gem[0], 'discriminator'] = gem[4]
+
+    if len(df[df['gem_color'] == '']) != 0:
+        missing_gems_duplicates = df.loc[df['gem_color'] == '', 'name']
+        missing_gems = missing_gems_duplicates.drop_duplicates()
+        warnings.warn(f"The following gems haven't received any gem color tag in function add_gem_colors(): \n \n "
+                      f"{missing_gems}\n \n "
+                      f"see: \n"
+                      f"{df[df['name'].isin(missing_gems)]}", UserWarning)
+    return df
+
+
+def add_gem_types(df_input):
+    # ö
+    df_gem_info = load_gem_info()
+    mapping = dict(df_gem_info[['name', 'type']].values)
+    df_input['gem_type'] = df_input.name.map(mapping)
+    df = df_input
+    # df['gem_type'] = "regular"
+
+    df.loc[df['gem_type'] == "skill", 'gem_type'] = "regular"
+    df.loc[df['gem_type'] == "support", 'gem_type'] = "regular"
     df.loc[df['name'].str.contains("Awakened"), 'gem_type'] = "awakened"
     df.loc[df['name'].str.contains("Enlighten"), 'gem_type'] = "exceptional"
     df.loc[df['name'].str.contains("Empower"), 'gem_type'] = "exceptional"
@@ -123,12 +144,10 @@ def calculate_divine_values(df, C_TO_DIV):
 def xp_requirement_regular_gems(df):
     df_reg_gem_xp = pd.read_pickle(path.join(os.getcwd(), "utility", "app1", "regular_gem_xp_df"))
 
-    # warnings.simplefilter('error')
-
     # iterate through all entries in gem list
     for i in df.index:
         gem_type = df.iloc[i]["gem_type"]
-        if gem_type == "regular":
+        if gem_type == "regular" or gem_type == "transfigured":
             gem_level_base = df.iloc[i]["gem_level_base"]
             gem_quali_base = df.iloc[i]["gem_quality_base"]
             gem_level = df.iloc[i]["gemLevel"]
@@ -176,7 +195,8 @@ def calculate_margin_per_xp_and_ranking(df):
         'enlempenh_norm']
     df.loc[df['name'] == "Blood and Sand", 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
         'bloodandsand_norm']
-    df.loc[df['name'] == "Brand Recall", 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE['brandrecall_norm']
+    df.loc[df['name'] == "Brand Recall", 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
+        'brandrecall_norm']
 
     # calculate margins for regular gems
     df = xp_requirement_regular_gems(df)
@@ -206,38 +226,57 @@ def remove_low_confidence(df, list_cnt):
     return df_conf
 
 
-def create_query_url(LEAGUE:str, name:str, skill:str, type_qual:str, corr:str):
+def create_query_url(LEAGUE: str, base_gem, discriminator):
+    # ToDo: Make the trade link function again
     # create the name string, format: %22Awakened%20Multistrike%20Support%22 (does not add %20 if only single word!
-    if type_qual == "Anomalous" or "Divergent" or "Phantasmal":
-        skill_name = skill
-        # anomalous: %22gem_alternate_quality%22:{%22option%22:%221%22},
-        # phantasmal: %22gem_alternate_quality%22:{%22option%22:%223%22},
-        # divergent: %22gem_alternate_quality%22:{%22option%22:%222%22},
-        if type_qual == "Anomalous":
-            alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%221%22},"
-        elif type_qual == "Phantasmal":
-            alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%223%22},"
-        elif type_qual == "Divergent":
-            alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%222%22},"
-        else:
-            alternate_qual = ""
+    # if type_qual == "Anomalous" or "Divergent" or "Phantasmal":
+    #     skill_name = skill
+    #     # anomalous: %22gem_alternate_quality%22:{%22option%22:%221%22},
+    #     # phantasmal: %22gem_alternate_quality%22:{%22option%22:%223%22},
+    #     # divergent: %22gem_alternate_quality%22:{%22option%22:%222%22},
+    #     if type_qual == "Anomalous":
+    #         alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%221%22},"
+    #     elif type_qual == "Phantasmal":
+    #         alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%223%22},"
+    #     elif type_qual == "Divergent":
+    #         alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%222%22},"
+    #     else:
+    #         alternate_qual = ""
+    #
+    # else:
+    #     alternate_qual = ""
+    #
+    # skill_name = name
+    #
+    # name_str = "%22" + skill_name.replace(" ", "%20") + "%22"
+    #
+    # query_url = (
+    #     f"https://www.pathofexile.com/trade/search/{LEAGUE}?q={{"
+    #     "%22query%22:{%22filters%22:{%22misc_filters%22:{%22filters%22:{%22gem_level%22:{{%22min%22:1}},"
+    #     "{alternate_qual}%22corrupted%22:{{%22option%22:{corr}}},%22quality%22:{{%22min%22:0}}"
+    #     f"}}}}}},%22type%22:{name_str}}}}}"
+    # )
 
+    name_str = "%22" + base_gem.replace(" ", "%20") + "%22"
+
+    url_prefix = f"https://www.pathofexile.com/trade/search/{LEAGUE}?q="
+    if discriminator == "alt_x":
+        discriminator_str = ",%22discriminator%22:%22alt_x%22"
+    elif discriminator == "alt_y":
+        discriminator_str = ",%22discriminator%22:%22alt_x%22"
     else:
-        alternate_qual = ""
-        skill_name = name
+        discriminator_str = ""
+    query_url = (url_prefix +
+                    "{%22query%22:{%22type%22:{%22option%22:" + name_str + discriminator_str + "},"
+                    "%22stats%22:[{%22type%22:%22and%22,%22filters%22:[],%22disabled%22:false}],%22status%22:{"
+                    "%22option%22:%22online%22},%22filters%22:{%22misc_filters%22:{%22filters%22:{%22corrupted%22:{"
+                    "%22option%22:%22false%22}},%22disabled%22:false}}}}"
+                 )
 
-    name_str = "%22" + skill_name.replace(" ", "%20") + "%22"
-
-    query_url = (
-        f"https://www.pathofexile.com/trade/search/{LEAGUE}?q={{"
-        "%22query%22:{%22filters%22:{%22misc_filters%22:{%22filters%22:{"
-        f"%22gem_level%22:{{%22min%22:1}},{alternate_qual}%22corrupted%22:{{%22option%22:{corr}}},%22quality%22:{{%22min%22:0}}"
-        f"}}}}}},%22type%22:{name_str}}}}}"
-    )
     return query_url
 
 
-def create_query_html(query_url:str):
+def create_query_html(query_url: str):
     # query_html = fr"<a href={query_url} Buy</a>"
     query_html = f"""<a class="button" target="_blank" title="Buy on pathofexile.com/trade" href={query_url} role="button" data-variant="round" data-size="small" style="font-family: "Source Sans Pro", sans-serif; color: rgb(255, 75, 75);">Trade <svg aria-hidden="true" data-prefix="fas" data-icon="exchange-alt" class="icon-exchange-alt-solid_svg__svg-inline--fa icon-exchange-alt-solid_svg__fa-exchange-alt icon-exchange-alt-solid_svg__fa-w-16" viewBox="0 0 512 512" width="1em" height="1em"><path fill="currentColor" d="M0 168v-16c0-13.255 10.745-24 24-24h360V80c0-21.367 25.899-32.042 40.971-16.971l80 80c9.372 9.373 9.372 24.569 0 33.941l-80 80C409.956 271.982 384 261.456 384 240v-48H24c-13.255 0-24-10.745-24-24zm488 152H128v-48c0-21.314-25.862-32.08-40.971-16.971l-80 80c-9.372 9.373-9.372 24.569 0 33.941l80 80C102.057 463.997 128 453.437 128 432v-48h360c13.255 0 24-10.745 24-24v-16c0-13.255-10.745-24-24-24z"></path></svg></a>"""
     return query_html
@@ -261,12 +300,14 @@ def add_search_url(df):
             df_gem = df_.iloc[[i]]
 
             # get the gem quality, gemlevel name and quality type
+            # ToDo: neue felder implementieren
             name = df_gem["name"].values[0]
-            skill = df_gem["skill"].values[0]
-            type_qual = df_gem["qualityType"].values[0]
+            type = df_gem["gem_type"].values[0]
+            base_gem = df_gem["base_gem"].values[0]
+            discriminator = df_gem["discriminator"].values[0]
 
             # create the query url from gem info
-            url = create_query_url(LEAGUE, name, skill, type_qual, corr="false")
+            url = create_query_url(LEAGUE, base_gem, discriminator)
             df_gem["query_url"] = url
 
             # create the query html from query url
@@ -286,6 +327,7 @@ def create_json_data():
     data_gem = pd.DataFrame.from_dict(dict_gem, orient="index")
     df_raw = data_gem
 
+    # ToDo: Awakened gems level 6 are not tagged with "corrupted" in ui
     # --- currency ---
     C_TO_DIV = data_cur[data_cur['name'] == "Divine Orb"]['value_chaos'].values[0]
     C_TO_VAAL = data_cur[data_cur['name'] == "Vaal Orb"]['value_chaos'].values[0]
@@ -316,6 +358,8 @@ def create_json_data():
     df["roi"] = ""
     df["ranking_from_roi"] = ""
     df["gem_color"] = ""
+    df["base_gem"] = ""
+    df["discriminator"] = ""
     df["query_url"] = ""
     df["query_html"] = ""
 
