@@ -20,7 +20,7 @@ def create_sidebar():
         st.sidebar.write("This is a project made by me [PoE Academy](https://www.youtube.com/c/PoEAcademy). You may already know me from my YT videos.")
 
     st.sidebar.write("For **bugs / feedback / feature requests** contact me on **[Discord]("
-                     "https://discord.com/channels/827836172184584214/981558870507929648)** or **[GitHub](https://github.com/grummble-ai/PathOfExile-SkillGemMargins/issues)**.")
+                     "https://discord.gg/mEJRvQeTgU)** or **[GitHub](https://github.com/grummble-ai/PathOfExile-SkillGemMargins/issues)**.")
     st.sidebar.write(
         "If this project creates a lot of value for you, consider supporting it directly via")
     with st.sidebar:
