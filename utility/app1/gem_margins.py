@@ -34,7 +34,7 @@ def get_ex_value(df):
 
 
 def load_gem_info():
-    df = pd.read_excel(path.join(os.getcwd(), "utility", "app1", "gem_colors_323.xlsx"))
+    df = pd.read_excel(path.join(os.getcwd(), "utility", "app1", "gem_colors_324.xlsx"))
     return df
 
 
