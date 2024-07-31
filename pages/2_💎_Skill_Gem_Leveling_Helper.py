@@ -310,6 +310,8 @@ def create_FAQ():
 def create_changelog():
     with st.expander("Changelog"):
         st.write("""
+            **Version 2.0.1** (31th of July, 2024) \n
+            - Gem List Updated to 3.25 
             **Version 2.0.0 (experimental)** (22th of December, 2023) \n
             - Fixed issues that came with the new transfigured gems (gem tags, trade website queries)
             - Minor improvements to the UI 
