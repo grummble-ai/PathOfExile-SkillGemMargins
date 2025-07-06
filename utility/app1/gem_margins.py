@@ -200,7 +200,8 @@ def calculate_margin_per_xp_and_ranking(df):
 
     # calculate margins for regular gems
     df = xp_requirement_regular_gems(df)
-
+    # Ensure margin_gem_specific is always float
+    df["margin_gem_specific"] = pd.to_numeric(df["margin_gem_specific"], errors="coerce")
     # rank entries after roi
     df["ranking_from_margin_gem_specific"] = df['margin_gem_specific'].rank(ascending=False)
     df["ranking_from_roi"] = df['roi'].rank(ascending=False)
@@ -329,8 +330,8 @@ def create_json_data():
 
     # ToDo: Awakened gems level 6 are not tagged with "corrupted" in ui
     # --- currency ---
-    C_TO_DIV = data_cur[data_cur['name'] == "Divine Orb"]['value_chaos'].values[0]
-    C_TO_VAAL = data_cur[data_cur['name'] == "Vaal Orb"]['value_chaos'].values[0]
+    C_TO_DIV = data_cur[data_cur['name'] == "Divine Orb"]['value_chaos'][0].item()
+    C_TO_VAAL = data_cur[data_cur['name'] == "Vaal Orb"]['value_chaos'][0].item()
 
     # --- gems ---
     # sort gems

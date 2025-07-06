@@ -193,12 +193,15 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
     # filter: roi
     df_top10 = df_top10[df_top10["roi"] >= min_roi]
 
-    # show only the 10 best results
+    # Ensure margin_gem_specific is numeric before sorting/ranking
+    if "margin_gem_specific" in df_top10.columns:
+        df_top10["margin_gem_specific"] = pd.to_numeric(df_top10["margin_gem_specific"], errors="coerce")
+
     if mode == "margin":
         df_top10 = df_top10.nlargest(NO_RESULTS, "margin_divine", keep="first")
     elif mode == "margin_rel":
-        # grab the 10 best gems to level by margin
-        df_top10 = df_top10.nsmallest(NO_RESULTS, "ranking_from_margin_gem_specific", keep="first")
+        df_top10 = df_top10.nlargest(NO_RESULTS, "margin_gem_specific", keep="first")
+        df_top10["ranking_from_margin_gem_specific"] = df_top10["margin_gem_specific"].rank(ascending=False, method="min")
     elif mode == "roi":
         # grab the 10 best gems to level by roi
         df_top10 = df_top10.nsmallest(NO_RESULTS, "ranking_from_roi", keep="first")
