@@ -6,7 +6,7 @@ from utility.plot_utility import df_get_max_col
 
 TITLE = "Skill Gem Leveling Helper"
 VERSION = "v2.0.0"
-NO_RESULTS = 20
+NO_RESULTS = 200
 
 # TODO: Finish settings and add button to site that can restore default settings // Could be done with sessionstate
 DEFAULT_SETTINGS = {
@@ -81,6 +81,11 @@ def create_top(df):
         #                         key="buy_chaos_max",
         #                         step=1)
 
+    # Add search box for gem name
+    search_term = st.text_input("Search for a Skill Gem (by name):", "")
+    if search_term:
+        df = df[df["name"].str.contains(search_term, case=False, na=False)]
+
     st.write("_The table below updates automatically when you make changes to your preferences._\n")
 
     st.markdown("---")
@@ -147,6 +152,13 @@ def column_title_link_to_html(type: str, text: str):
     return html
 
 
+def safe_format(val):
+    try:
+        return '{:,.3f}'.format(float(val))
+    except (ValueError, TypeError):
+        return val  # Leave as is if not a number
+
+
 def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_colors, min_roi, min_c, mode):
     # various filters
     # filter: low confidence
@@ -199,7 +211,7 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
 
     truncate_list = ["buy_divine", "sell_divine", "margin_divine", "margin_gem_specific", "roi"]
     for col in truncate_list:
-        df_top10[col] = df_top10[col].map('{:,.3f}'.format)
+        df_top10[col] = df_top10[col].map(safe_format)
 
     # reindex icon url and name to show the icon first
     df_top10 = swap_df_columns(df_top10, "name", "icon_url")
@@ -255,7 +267,7 @@ def drop_gem_types(df, alt_gem, awaken, exception):
     return df
 
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def create_rawdata(df):
     # ui elements
     create_top_table_img(df, hide_conf=False, nr_conf=0, hide_corr=False,
@@ -341,7 +353,7 @@ def create_changelog():
             - Added a lot more settings to the settings part (gem colors/types, min values) 
             - Included both tables into tabs for better navigation
             - Added skill gem icons and buy (chaos) to the tables for better orientation 
-            - Reworked the FAQ and added a lot more information to it
+            - Rewritten the FAQ and added a lot more information to it
             - Added minor improvements to the layout
             - Changed the refernce currency from Exalted Orbs (good by my old friend) to Divine Orbs
             - Removed a long standing bug where the Exalted (now Divine) Orb to Chaos Orb ratio was not calculated correctly
@@ -362,7 +374,7 @@ def create_changelog():
             - Slight improvements to the UI. \n
             **Version 0.8.0** \n
             - Fixed a bug where some corrupted versions of gems were used as a starting point of the analysis
-            - Rewrote some info in the expanders
+            - Rewritten some info in the expanders
         """)
 
 
@@ -380,7 +392,7 @@ def session_state_variables(df):
         st.session_state.roi_max = roi_max
 
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_data():
     dict_gem = dh.load_json()
     df_raw = pd.DataFrame.from_dict(dict_gem, orient="index")
