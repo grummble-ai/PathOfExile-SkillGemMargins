@@ -141,6 +141,13 @@ def path_to_image_html(path):
 def convert_df(input_df):
     html = input_df.to_html(escape=False, formatters=dict(Icon=path_to_image_html), index=False)
     html_title_centered = html.replace('<th>', '<th align="center">')
+    
+    # Add width to the Path [Lvl/Qual] column
+    html_title_centered = html_title_centered.replace(
+        '<th align="center">Path [Lvl/Qual]</th>', 
+        '<th align="center" width="180">Path [Lvl/Qual]</th>'
+    )
+    
     return html_title_centered
 
 
@@ -268,7 +275,7 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
                                         "buy_divine": column_title_link_to_html("divine", "Buy"),
                                         "sell_divine": column_title_link_to_html("divine", "Sell"),
                                         "margin_divine": column_title_link_to_html("divine", "Margin"),
-                                        "risk_adjusted_return": column_title_link_to_html("divine", "Margin Adjusted by Corruption Risk"),
+                                        "risk_adjusted_return": column_title_link_to_html("divine", "Risk-Adj. Margin"),
                                         "margin_gem_specific": "Norm. " + column_title_link_to_html("divine", "Margin"),
                                         "roi": "RoI",
                                         "risk_adjusted_roi": "RoI Adjusted by Corruption Risk",
