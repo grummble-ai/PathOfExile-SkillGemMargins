@@ -286,7 +286,7 @@ def load_all_categories():
 
     # database(category_data)
     save_raw_json(category_data)
-    print("Successfully saved data to data.json")
+    print("Successfully saved data to raw_data.json")
     print("\n")
 
 

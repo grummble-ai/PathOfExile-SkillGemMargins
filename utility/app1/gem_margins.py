@@ -1,377 +1,498 @@
+"""
+Path of Exile Skill Gem Margin Calculator
+
+This module calculates profit margins for skill gems in Path of Exile by analyzing
+the cost of leveling/qualitying gems versus their market value. It handles different
+gem types (regular, awakened, exceptional, special) and calculates risk-adjusted returns.
+
+Author: PoE Academy
+"""
+
 import os
 import warnings
 import pandas as pd
 from utility.app1 import skillgems_data_handler as dh
 from os import path
+from typing import Dict, List, Tuple
 
+# Suppress pandas chained assignment warnings
 pd.options.mode.chained_assignment = None
 
-GEM_EXPERIENCE_AWAKENED = 1920762677  # to level 5; #TODO: awakened gems seem to have different xp requirements?
-GEM_EXPERIENCE_ENLEMPENH = 1666045137  # to level 3; for enhance, empower and enlighten
-GEM_EXPERIENCE_BLOODANDSAND = 529166003  # to level 6;
-GEM_EXPERIENCE_BRANDRECALL = 341913067  # to level 6
-GEM_EXPERIENCE_REGULAR = 684009294  # to level 20/20;
-MAX_EXP = max(GEM_EXPERIENCE_AWAKENED, GEM_EXPERIENCE_ENLEMPENH, GEM_EXPERIENCE_BLOODANDSAND,
-              GEM_EXPERIENCE_BRANDRECALL, GEM_EXPERIENCE_REGULAR)
+# =============================================================================
+# CONSTANTS
+# =============================================================================
 
-GEM_EXPERIENCE = {"awakened": GEM_EXPERIENCE_AWAKENED,
-                  "enlempenh": GEM_EXPERIENCE_ENLEMPENH,
-                  "bloodandsand": GEM_EXPERIENCE_BLOODANDSAND,
-                  "brandrecall": GEM_EXPERIENCE_BRANDRECALL,
-                  "regular": GEM_EXPERIENCE_REGULAR,
-                  "awakened_norm": GEM_EXPERIENCE_AWAKENED / MAX_EXP,
-                  "enlempenh_norm": GEM_EXPERIENCE_ENLEMPENH / MAX_EXP,
-                  "bloodandsand_norm": GEM_EXPERIENCE_BLOODANDSAND / MAX_EXP,
-                  "brandrecall_norm": GEM_EXPERIENCE_BRANDRECALL / MAX_EXP,
-                  "regular_norm": GEM_EXPERIENCE_REGULAR / MAX_EXP,
-                  }
+# Experience requirements for different gem types (to max level)
+GEM_EXPERIENCE = {
+    "awakened": 1920762677,      # to level 5
+    "exceptional": 1666045137,   # to level 3 (Enhance, Empower, Enlighten)
+    "bloodandsand": 529166003,   # to level 6
+    "brandrecall": 341913067,    # to level 6
+    "regular": 684009294,        # to level 20/20
+}
 
+# Calculate maximum experience for normalization
+MAX_EXP = max(GEM_EXPERIENCE.values())
 
-def get_ex_value(df):
-    divine_value = df.loc['Divine Orb'][0]
-    df['value_divine'] = df['value'].div(divine_value)
+# Create normalized experience dictionary
+GEM_EXPERIENCE_NORM = {
+    f"{gem_type}_norm": exp / MAX_EXP 
+    for gem_type, exp in GEM_EXPERIENCE.items()
+}
+
+# Combine both dictionaries
+GEM_EXPERIENCE = {**GEM_EXPERIENCE, **GEM_EXPERIENCE_NORM}
+
+# =============================================================================
+# DATA LOADING FUNCTIONS
+# =============================================================================
+
+def load_gem_info() -> pd.DataFrame:
+    """
+    Load gem information from Excel files with fallback options.
+    
+    Returns:
+        pd.DataFrame: DataFrame containing gem information (name, color, type, base_gem, discriminator)
+    """
+    files_to_try = [
+        "gem_colors_325.xlsx", 
+        "gem_colors_324.xlsx", 
+        "gem_colors_323.xlsx", 
+        "gem_colors.xlsx"
+    ]
+    
+    for filename in files_to_try:
+        try:
+            file_path = path.join(os.getcwd(), "utility", "app1", filename)
+            return pd.read_excel(file_path)
+        except (PermissionError, FileNotFoundError):
+            continue
+    
+    # Fallback: create minimal dataframe to avoid errors
+    print("Warning: Could not load gem colors file, using minimal data")
+    return pd.DataFrame({
+        'name': [], 'color': [], 'type': [], 'base_gem': [], 'discriminator': []
+    })
+
+def load_regular_gem_xp() -> pd.DataFrame:
+    """
+    Load regular gem experience requirements from pickle file.
+    
+    Returns:
+        pd.DataFrame: Experience requirements matrix for regular gems
+    """
+    file_path = path.join(os.getcwd(), "utility", "app1", "regular_gem_xp_df")
+    return pd.read_pickle(file_path)
+
+# =============================================================================
+# GEM CLASSIFICATION FUNCTIONS
+# =============================================================================
+
+def classify_gem_types(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Classify gems into types based on their names and characteristics.
+    
+    Args:
+        df: DataFrame containing gem data with 'name' column
+        
+    Returns:
+        pd.DataFrame: DataFrame with added 'gem_type' column
+    """
+    df = df.copy()
+    
+    # Load gem info and create mapping
+    gem_info = load_gem_info()
+    type_mapping = dict(gem_info[['name', 'type']].values)
+    
+    # Apply initial mapping
+    df['gem_type'] = df['name'].map(type_mapping)
+    
+    # Standardize skill and support gems as regular
+    df.loc[df['gem_type'].isin(['skill', 'support']), 'gem_type'] = 'regular'
+    
+    # Classify special gem types
+    gem_classifications = {
+        'awakened': df['name'].str.contains('Awakened'),
+        'exceptional': df['name'].str.contains('Enlighten|Empower|Enhance'),
+        'special': df['name'].isin(['Blood and Sand', 'Brand Recall'])
+    }
+    
+    for gem_type, condition in gem_classifications.items():
+        df.loc[condition, 'gem_type'] = gem_type
+    
     return df
 
-
-def load_gem_info():
-    df = pd.read_excel(path.join(os.getcwd(), "utility", "app1", "gem_colors_325.xlsx"))
+def add_gem_metadata(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add gem color, base gem, and discriminator information.
+    
+    Args:
+        df: DataFrame containing gem data
+        
+    Returns:
+        pd.DataFrame: DataFrame with added gem metadata columns
+    """
+    df = df.copy()
+    gem_info = load_gem_info()
+    
+    # Create mappings for efficient lookup
+    color_mapping = dict(zip(gem_info['name'], gem_info['color']))
+    base_gem_mapping = dict(zip(gem_info['name'], gem_info['base_gem']))
+    discriminator_mapping = dict(zip(gem_info['name'], gem_info['discriminator']))
+    
+    # Apply mappings
+    df['gem_color'] = df['skill'].map(color_mapping)
+    df['base_gem'] = df['skill'].map(base_gem_mapping)
+    df['discriminator'] = df['skill'].map(discriminator_mapping)
+    
+    # Check for missing gems and warn
+    missing_gems = df[df['gem_color'].isna()]['name'].dropna().unique()
+    if len(missing_gems) > 0:
+        warnings.warn(
+            f"Missing gem color tags for: {missing_gems}",
+            UserWarning
+        )
+    
     return df
 
+# =============================================================================
+# ECONOMIC CALCULATION FUNCTIONS
+# =============================================================================
 
-def add_gem_colors(df):
-    df_colors = load_gem_info()
-    gem_colors = df_colors.values.tolist()
+def find_base_gem(df_gem_group: pd.DataFrame) -> pd.Series:
+    """
+    Find the cheapest base gem in a group of gems with the same name.
+    
+    Args:
+        df_gem_group: DataFrame containing gems with the same name
+        
+    Returns:
+        pd.Series: Row representing the cheapest base gem
+    """
+    # Find the cheapest entry by combining all criteria at once
+    min_corrupted = df_gem_group['corrupted'].min()
+    min_quality = df_gem_group['gemQuality'].min()
+    min_level = df_gem_group['gemLevel'].min()
+    
+    # Filter by all criteria simultaneously
+    filtered = df_gem_group[
+        (df_gem_group['corrupted'] == min_corrupted) &
+        (df_gem_group['gemQuality'] == min_quality) &
+        (df_gem_group['gemLevel'] == min_level)
+    ]
+    
+    # Get the one with minimum chaos value
+    min_chaos_idx = filtered['value_chaos'].idxmin()
+    return filtered.loc[min_chaos_idx]
 
-    for gem in gem_colors:
-        df.loc[df['skill'] == gem[0], 'gem_color'] = gem[1]
-        df.loc[df['skill'] == gem[0], 'base_gem'] = gem[3]
-        df.loc[df['skill'] == gem[0], 'discriminator'] = gem[4]
+def calculate_chaos_values(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate chaos orb values for all gem upgrade paths.
+    
+    Args:
+        df: DataFrame containing gem data
+        
+    Returns:
+        pd.DataFrame: DataFrame with calculated chaos values
+    """
+    results = []
+    
+    for gem_name in df['name'].unique():
+        gem_group = df[df['name'] == gem_name]
+        base_gem = find_base_gem(gem_group)
+        
+        for _, gem in gem_group.iterrows():
+            # Calculate economic values
+            buy_chaos = base_gem['value_chaos']
+            sell_chaos = gem['value_chaos']
+            margin_chaos = sell_chaos - buy_chaos
+            roi = margin_chaos / buy_chaos if buy_chaos > 0 else 0
+            
+            # Create upgrade path string
+            base_str = f"[{base_gem['gemLevel']}/{base_gem['gemQuality']}]"
+            target_str = f"[{gem['gemLevel']}/{gem['gemQuality']}]"
+            corruption_mark = " ©" if gem['corrupted'] else ""
+            upgrade_path = f"{base_str} -> {target_str}{corruption_mark}"
+            
+            # Add calculated values
+            gem_result = gem.copy()
+            gem_result.update({
+                'buy_c': buy_chaos,
+                'sell_c': sell_chaos,
+                'margin_c': margin_chaos,
+                'roi': roi,
+                'gem_level_base': base_gem['gemLevel'],
+                'gem_quality_base': base_gem['gemQuality'],
+                'upgrade_path': upgrade_path
+            })
+            
+            results.append(gem_result)
+    
+    return pd.DataFrame(results)
 
-    if len(df[df['gem_color'] == '']) != 0:
-        missing_gems_duplicates = df.loc[df['gem_color'] == '', 'name']
-        missing_gems = missing_gems_duplicates.drop_duplicates()
-        warnings.warn(f"The following gems haven't received any gem color tag in function add_gem_colors(): \n \n "
-                      f"{missing_gems}\n \n "
-                      f"see: \n"
-                      f"{df[df['name'].isin(missing_gems)]}", UserWarning)
+def calculate_divine_values(df: pd.DataFrame, chaos_to_divine: float) -> pd.DataFrame:
+    """
+    Convert chaos values to divine orb values.
+    
+    Args:
+        df: DataFrame with chaos values
+        chaos_to_divine: Conversion rate from chaos to divine orbs
+        
+    Returns:
+        pd.DataFrame: DataFrame with divine orb values added
+    """
+    df = df.copy()
+    df['buy_divine'] = df['buy_c'] / chaos_to_divine
+    df['sell_divine'] = df['sell_c'] / chaos_to_divine
+    df['margin_divine'] = df['margin_c'] / chaos_to_divine
     return df
 
-
-def add_gem_types(df_input):
-    # ö
-    df_gem_info = load_gem_info()
-    mapping = dict(df_gem_info[['name', 'type']].values)
-    df_input['gem_type'] = df_input.name.map(mapping)
-    df = df_input
-    # df['gem_type'] = "regular"
-
-    df.loc[df['gem_type'] == "skill", 'gem_type'] = "regular"
-    df.loc[df['gem_type'] == "support", 'gem_type'] = "regular"
-    df.loc[df['name'].str.contains("Awakened"), 'gem_type'] = "awakened"
-    df.loc[df['name'].str.contains("Enlighten"), 'gem_type'] = "exceptional"
-    df.loc[df['name'].str.contains("Empower"), 'gem_type'] = "exceptional"
-    df.loc[df['name'].str.contains("Enhance"), 'gem_type'] = "exceptional"
-    df.loc[df['name'] == "Blood and Sand", 'gem_type'] = "special"
-    df.loc[df['name'] == "Brand Recall", 'gem_type'] = "special"
-
+def calculate_regular_gem_xp_margins(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate XP-normalized margins for regular gems.
+    
+    Args:
+        df: DataFrame containing gem data
+        
+    Returns:
+        pd.DataFrame: DataFrame with XP-normalized margins
+    """
+    df = df.copy()
+    xp_matrix = load_regular_gem_xp()
+    
+    for idx, row in df.iterrows():
+        if row['gem_type'] not in ['regular', 'transfigured']:
+            continue
+            
+        # Skip if no upgrade (same level/quality)
+        if (row['gem_level_base'] == row['gemLevel'] and 
+            row['gem_quality_base'] == row['gemQuality']):
+            df.loc[idx, 'margin_gem_specific'] = row['margin_divine']
+            continue
+        
+        # Calculate XP indices
+        base_quality_offset = 20 if row['gem_quality_base'] > 0 else 0
+        target_quality_offset = 20 if row['gemQuality'] > 0 else 0
+        
+        x_idx = row['gem_level_base'] - 1 + base_quality_offset
+        
+        if row['gemQuality'] > 0 and 1 <= row['gemLevel'] <= 20:
+            y_idx = row['gemLevel'] - 1 + target_quality_offset
+        elif row['gemQuality'] > 0 and row['gemLevel'] == 21:
+            y_idx = row['gemLevel'] - 2 + target_quality_offset
+        else:
+            y_idx = row['gemLevel'] - 1
+        
+        # Get XP requirement and calculate normalized margin
+        xp_required = xp_matrix.iloc[y_idx, x_idx]
+        margin_normalized = row['margin_divine'] / (xp_required / MAX_EXP)
+        df.loc[idx, 'margin_gem_specific'] = margin_normalized
+    
     return df
 
-
-def calculate_chaos_values(df):
-    unique_names = df.drop_duplicates(subset="name")
-    names = unique_names["name"].tolist()
-
-    # create a new dataframe with all columns that will be filled using the loop below
-    df_analyzed = df[0:0]
-
-    # iterate trough every gem in the gem list (e.g. Lightning Strike, Hatred, ...)
-    for idx, gems in enumerate(names):
-        df_ = df[df['name'] == gems]
-
-        # find the cheapest entry in the group and use it as a basis
-        df_min = df_[df_.corrupted == df_.corrupted.min()]
-        df_min = df_min[df_min.gemQuality == df_min.gemQuality.min()]
-        df_min = df_min[df_min.gemLevel == df_min.gemLevel.min()]
-        df_min = df_min[df_min.value_chaos == df_min.value_chaos.min()]
-        # # For debugging
-        # if df_min.corrupted[0] is True:
-        #     print(f"no uncorrupted version found for gem: {gems}")
-
-        # iterate through every single gem entry for a give gem (e.g. 8/0, 16/0 and 20/20 for Lightning Strike)
-        for i in range(df_.shape[0]):
-            df_gem = df_.iloc[[i]]
-            # calculate economic values
-            buy_c = df_min["value_chaos"].values[0]
-            sell_c = df_gem["value_chaos"].values[0]
-            margin_c = sell_c - buy_c
-            roi_c = margin_c / buy_c
-
-            # add them to the highest level / quality gem dataframe
-            df_gem["buy_c"] = buy_c
-            df_gem["sell_c"] = sell_c
-            df_gem["margin_c"] = margin_c
-            df_gem["roi"] = roi_c
-
-            df_gem["gem_level_base"] = df_min['gemLevel'].values[0]
-            df_gem["gem_quality_base"] = df_min['gemQuality'].values[0]
-
-            # upgrade path
-            if df_gem["corrupted"].values[0]:
-                df_gem["upgrade_path"] = '[' + str(df_min['gemLevel'].values[0]) \
-                                         + '/' + str(df_min['gemQuality'].values[0]) \
-                                         + '] -> [' + str(df_gem['gemLevel'].values[0]) \
-                                         + '/' + str(df_gem['gemQuality'].values[0]) + '] ©'
-            else:
-                df_gem["upgrade_path"] = '[' + str(df_min['gemLevel'].values[0]) \
-                                         + '/' + str(df_min['gemQuality'].values[0]) \
-                                         + '] -> [' + str(df_gem['gemLevel'].values[0]) \
-                                         + '/' + str(df_gem['gemQuality'].values[0]) + ']'
-
-            # append the resulting dataframe
-            df_analyzed = pd.concat([df_analyzed, df_gem], ignore_index=True)
-
-    return df_analyzed
-
-
-def calculate_divine_values(df, C_TO_DIV):
-    df['buy_divine'] = df['buy_c'].div(C_TO_DIV)
-    df['sell_divine'] = df['sell_c'].div(C_TO_DIV)
-    df['margin_divine'] = df['margin_c'].div(C_TO_DIV)
-
+def calculate_margins_and_rankings(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate XP-normalized margins and risk-adjusted returns for all gem types.
+    
+    Args:
+        df: DataFrame containing gem data
+        
+    Returns:
+        pd.DataFrame: DataFrame with margins, rankings, and risk adjustments
+    """
+    df = df.copy()
+    
+    # Calculate XP-normalized margins for special gem types
+    special_gem_mappings = {
+        'Awakened': 'awakened_norm',
+        'Enlighten|Empower|Enhance': 'exceptional_norm',
+        'Blood and Sand': 'bloodandsand_norm',
+        'Brand Recall': 'brandrecall_norm'
+    }
+    
+    for pattern, exp_key in special_gem_mappings.items():
+        mask = df['name'].str.contains(pattern, regex=True)
+        df.loc[mask, 'margin_gem_specific'] = (
+            df.loc[mask, 'margin_divine'] / GEM_EXPERIENCE[exp_key]
+        )
+    
+    # Calculate margins for regular gems
+    df = calculate_regular_gem_xp_margins(df)
+    
+    # Ensure margin_gem_specific is numeric
+    df['margin_gem_specific'] = pd.to_numeric(df['margin_gem_specific'], errors='coerce')
+    
+    # Calculate risk-adjusted returns
+    # Corrupted gems have 1/8 chance of success (12.5% success rate)
+    df['risk_adjusted_return'] = df['margin_divine'].copy()
+    corrupted_mask = df['corrupted'] == True
+    df.loc[corrupted_mask, 'risk_adjusted_return'] = (
+        df.loc[corrupted_mask, 'sell_divine'] * 0.125 - 
+        df.loc[corrupted_mask, 'buy_divine']
+    )
+    
+    # Calculate risk-adjusted ROI
+    df['risk_adjusted_roi'] = df['risk_adjusted_return'] / df['buy_divine']
+    
+    # Calculate rankings
+    df['ranking_from_margin_gem_specific'] = df['margin_gem_specific'].rank(ascending=False)
+    df['ranking_from_roi'] = df['roi'].rank(ascending=False)
+    
+    # Filter out non-profitable entries
+    df = df[df['roi'] > 0]
+    
     return df
 
+def filter_low_confidence(df: pd.DataFrame, min_listings: int) -> pd.DataFrame:
+    """
+    Remove gems with too few market listings for reliable pricing.
+    
+    Args:
+        df: DataFrame containing gem data
+        min_listings: Minimum number of listings required
+        
+    Returns:
+        pd.DataFrame: Filtered DataFrame
+    """
+    gem_listing_counts = df.groupby('name')['listingcount'].first()
+    reliable_gems = gem_listing_counts[gem_listing_counts > min_listings].index
+    return df[df['name'].isin(reliable_gems)]
 
-def xp_requirement_regular_gems(df):
-    df_reg_gem_xp = pd.read_pickle(path.join(os.getcwd(), "utility", "app1", "regular_gem_xp_df"))
+# =============================================================================
+# TRADE URL GENERATION FUNCTIONS
+# =============================================================================
 
-    # iterate through all entries in gem list
-    for i in df.index:
-        gem_type = df.iloc[i]["gem_type"]
-        if gem_type == "regular" or gem_type == "transfigured":
-            gem_level_base = df.iloc[i]["gem_level_base"]
-            gem_quali_base = df.iloc[i]["gem_quality_base"]
-            gem_level = df.iloc[i]["gemLevel"]
-            gem_quali = df.iloc[i]["gemQuality"]
-            gem_name = df.iloc[i]["name"]
+def create_trade_url(league: str, base_gem: str, discriminator: str) -> str:
+    """
+    Create a Path of Exile trade search URL for a specific gem.
+    
+    Args:
+        league: Current league name
+        base_gem: Base gem name
+        discriminator: Gem discriminator (alt_x, alt_y, etc.)
+        
+    Returns:
+        str: Trade search URL
+    """
+    # Ensure base_gem is a string and handle missing values
+    if not isinstance(base_gem, str) or pd.isna(base_gem):
+        base_gem = "UnknownGem"
+    name_str = f'%22{base_gem.replace(" ", "%20")}%22'
+    
+    discriminator_str = ""
+    if isinstance(discriminator, str) and discriminator in ['alt_x', 'alt_y']:
+        discriminator_str = f',%22discriminator%22:%22{discriminator}%22'
+    
+    url_template = (
+        f"https://www.pathofexile.com/trade/search/{league}?q="
+        "{%22query%22:{%22type%22:{%22option%22:" + name_str + discriminator_str + "},"
+        "%22stats%22:[{%22type%22:%22and%22,%22filters%22:[],%22disabled%22:false}],"
+        "%22status%22:{%22option%22:%22online%22},"
+        "%22filters%22:{%22misc_filters%22:{%22filters%22:{%22corrupted%22:{%22option%22:%22false%22}},"
+        "%22disabled%22:false}}}}"
+    )
+    
+    return url_template
 
-            # don't do anything if they have the same level / qual
-            if not (gem_level_base == gem_level and gem_quali_base == gem_quali):
-                # find the right number in the xp matrix
-                if gem_quali_base > 0:
-                    ind_x = gem_level_base - 1 + 20
-                else:
-                    ind_x = gem_level_base - 1
+def create_trade_button_html(url: str) -> str:
+    """
+    Create HTML for a trade button.
+    
+    Args:
+        url: Trade search URL
+        
+    Returns:
+        str: HTML button code
+    """
+    return (
+        f'<a class="button" target="_blank" title="Buy on pathofexile.com/trade" '
+        f'href={url} role="button" data-variant="round" data-size="small" '
+        f'style="font-family: "Source Sans Pro", sans-serif; color: rgb(255, 75, 75);">'
+        f'Trade <svg aria-hidden="true" data-prefix="fas" data-icon="exchange-alt" '
+        f'class="icon-exchange-alt-solid_svg__svg-inline--fa icon-exchange-alt-solid_svg__fa-exchange-alt '
+        f'icon-exchange-alt-solid_svg__fa-w-16" viewBox="0 0 512 512" width="1em" height="1em">'
+        f'<path fill="currentColor" d="M0 168v-16c0-13.255 10.745-24 24-24h360V80c0-21.367 25.899-32.042 '
+        f'40.971-16.971l80 80c9.372 9.373 9.372 24.569 0 33.941l-80 80C409.956 271.982 384 261.456 '
+        f'384 240v-48H24c-13.255 0-24-10.745-24-24zm488 152H128v-48c0-21.314-25.862-32.08-40.971-16.971l-80 80c-9.372 '
+        f'9.373-9.372 24.569 0 33.941l80 80C102.057 463.997 128 453.437 128 432v-48h360c13.255 0 24-10.745 24-24v-16c0-13.255-10.745-24-24-24z"></path></svg></a>'
+    )
 
-                if gem_quali > 0 and 1 <= gem_level <= 20:
-                    ind_y = gem_level - 1 + 20
-                elif gem_quali > 0 and gem_level == 21:
-                    ind_y = gem_level - 2 + 20
-                else:
-                    ind_y = gem_level - 1
-
-                xp_required_raw = df_reg_gem_xp.iloc[ind_y]
-                xp_required = xp_required_raw.iloc[ind_x]
-                margin_divine_norm = df.iloc[i]['margin_divine'] / (xp_required / MAX_EXP)
-
-                df.loc[i, 'margin_gem_specific'] = margin_divine_norm
-
-            else:
-                # mainly used for the same gems: [16/0] -> [16/0] no xp so margin_gem_specific == margin_divine
-                df.loc[i, 'margin_gem_specific'] = df.iloc[i]["margin_divine"]
-
+def add_trade_urls(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add trade URLs and HTML buttons to the DataFrame.
+    
+    Args:
+        df: DataFrame containing gem data
+        
+    Returns:
+        pd.DataFrame: DataFrame with trade URLs and HTML buttons
+    """
+    df = df.copy()
+    league = dh.load_league()
+    
+    df['query_url'] = df.apply(
+        lambda row: create_trade_url(league, row['base_gem'], row['discriminator']), 
+        axis=1
+    )
+    
+    df['query_html'] = df['query_url'].apply(create_trade_button_html)
+    
     return df
 
+# =============================================================================
+# MAIN PROCESSING FUNCTION
+# =============================================================================
 
-def calculate_margin_per_xp_and_ranking(df):
-    # --- normalize margin depending on xp required ---
-    # df['margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE['regular_norm']
-    df.loc[df['name'].str.contains("Awakened"), 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
-        'awakened_norm']
-    df.loc[df['name'].str.contains("Enlighten"), 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
-        'enlempenh_norm']
-    df.loc[df['name'].str.contains("Empower"), 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
-        'enlempenh_norm']
-    df.loc[df['name'].str.contains("Enhance"), 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
-        'enlempenh_norm']
-    df.loc[df['name'] == "Blood and Sand", 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
-        'bloodandsand_norm']
-    df.loc[df['name'] == "Brand Recall", 'margin_gem_specific'] = df['margin_divine'] / GEM_EXPERIENCE[
-        'brandrecall_norm']
-
-    # calculate margins for regular gems
-    df = xp_requirement_regular_gems(df)
-
-    # rank entries after roi
-    df["ranking_from_margin_gem_specific"] = df['margin_gem_specific'].rank(ascending=False)
-    df["ranking_from_roi"] = df['roi'].rank(ascending=False)
-
-    # sort out all rows with no return of investment (margin 0 or even negative)
-    df = df[df["roi"] > 0]
-
-    return df
-
-
-def remove_low_confidence(df, list_cnt):
-    unique_gems = list(df['name'].unique())
-    skills_to_keep, skills_to_delete = [], []
-
-    for name in unique_gems:
-        df_ = df[(df['name'] == name)]
-        cnt = list(df_["listingcount"])
-        if cnt[0] > list_cnt:
-            skills_to_keep.append(name)
-
-    df_conf = df[df['name'].isin(skills_to_keep)]
-
-    return df_conf
-
-
-def create_query_url(LEAGUE: str, base_gem, discriminator):
-    # ToDo: Make the trade link function again
-    # create the name string, format: %22Awakened%20Multistrike%20Support%22 (does not add %20 if only single word!
-    # if type_qual == "Anomalous" or "Divergent" or "Phantasmal":
-    #     skill_name = skill
-    #     # anomalous: %22gem_alternate_quality%22:{%22option%22:%221%22},
-    #     # phantasmal: %22gem_alternate_quality%22:{%22option%22:%223%22},
-    #     # divergent: %22gem_alternate_quality%22:{%22option%22:%222%22},
-    #     if type_qual == "Anomalous":
-    #         alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%221%22},"
-    #     elif type_qual == "Phantasmal":
-    #         alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%223%22},"
-    #     elif type_qual == "Divergent":
-    #         alternate_qual = "%22gem_alternate_quality%22:{%22option%22:%222%22},"
-    #     else:
-    #         alternate_qual = ""
-    #
-    # else:
-    #     alternate_qual = ""
-    #
-    # skill_name = name
-    #
-    # name_str = "%22" + skill_name.replace(" ", "%20") + "%22"
-    #
-    # query_url = (
-    #     f"https://www.pathofexile.com/trade/search/{LEAGUE}?q={{"
-    #     "%22query%22:{%22filters%22:{%22misc_filters%22:{%22filters%22:{%22gem_level%22:{{%22min%22:1}},"
-    #     "{alternate_qual}%22corrupted%22:{{%22option%22:{corr}}},%22quality%22:{{%22min%22:0}}"
-    #     f"}}}}}},%22type%22:{name_str}}}}}"
-    # )
-
-    name_str = "%22" + base_gem.replace(" ", "%20") + "%22"
-
-    url_prefix = f"https://www.pathofexile.com/trade/search/{LEAGUE}?q="
-    if discriminator == "alt_x":
-        discriminator_str = ",%22discriminator%22:%22alt_x%22"
-    elif discriminator == "alt_y":
-        discriminator_str = ",%22discriminator%22:%22alt_x%22"
-    else:
-        discriminator_str = ""
-    query_url = (url_prefix +
-                    "{%22query%22:{%22type%22:{%22option%22:" + name_str + discriminator_str + "},"
-                    "%22stats%22:[{%22type%22:%22and%22,%22filters%22:[],%22disabled%22:false}],%22status%22:{"
-                    "%22option%22:%22online%22},%22filters%22:{%22misc_filters%22:{%22filters%22:{%22corrupted%22:{"
-                    "%22option%22:%22false%22}},%22disabled%22:false}}}}"
-                 )
-
-    return query_url
-
-
-def create_query_html(query_url: str):
-    # query_html = fr"<a href={query_url} Buy</a>"
-    query_html = f"""<a class="button" target="_blank" title="Buy on pathofexile.com/trade" href={query_url} role="button" data-variant="round" data-size="small" style="font-family: "Source Sans Pro", sans-serif; color: rgb(255, 75, 75);">Trade <svg aria-hidden="true" data-prefix="fas" data-icon="exchange-alt" class="icon-exchange-alt-solid_svg__svg-inline--fa icon-exchange-alt-solid_svg__fa-exchange-alt icon-exchange-alt-solid_svg__fa-w-16" viewBox="0 0 512 512" width="1em" height="1em"><path fill="currentColor" d="M0 168v-16c0-13.255 10.745-24 24-24h360V80c0-21.367 25.899-32.042 40.971-16.971l80 80c9.372 9.373 9.372 24.569 0 33.941l-80 80C409.956 271.982 384 261.456 384 240v-48H24c-13.255 0-24-10.745-24-24zm488 152H128v-48c0-21.314-25.862-32.08-40.971-16.971l-80 80c-9.372 9.373-9.372 24.569 0 33.941l80 80C102.057 463.997 128 453.437 128 432v-48h360c13.255 0 24-10.745 24-24v-16c0-13.255-10.745-24-24-24z"></path></svg></a>"""
-    return query_html
-
-
-def add_search_url(df):
-    LEAGUE = dh.load_league()
-
-    unique_names = df.drop_duplicates(subset="name")
-    names = unique_names["name"].tolist()
-
-    # create a new dataframe with all columns that will be filled using the loop below
-    df_urls_added = df[0:0]
-
-    for idx, gems in enumerate(names):
-        # iterate trough every gem in the gem list (e.g. Lightning Strike, Hatred, ...)
-        df_ = df[df['name'] == gems]
-
-        # iterate through every single gem entry for a give gem (e.g. 8/0, 16/0 and 20/20 for Lightning Strike)
-        for i in range(df_.shape[0]):
-            df_gem = df_.iloc[[i]]
-
-            # get the gem quality, gemlevel name and quality type
-            # ToDo: neue felder implementieren
-            name = df_gem["name"].values[0]
-            type = df_gem["gem_type"].values[0]
-            base_gem = df_gem["base_gem"].values[0]
-            discriminator = df_gem["discriminator"].values[0]
-
-            # create the query url from gem info
-            url = create_query_url(LEAGUE, base_gem, discriminator)
-            df_gem["query_url"] = url
-
-            # create the query html from query url
-            html = create_query_html(url)
-            df_gem["query_html"] = html
-
-            # append the resulting dataframe
-            df_urls_added = pd.concat([df_urls_added, df_gem], ignore_index=True)
-
-    return df_urls_added
-
-
-def create_json_data():
-    dict_cur = dh.load_raw_dict(type="Currency")
-    data_cur = pd.DataFrame.from_dict(dict_cur, orient="index")
-    dict_gem = dh.load_raw_dict(type="Gems")
-    data_gem = pd.DataFrame.from_dict(dict_gem, orient="index")
-    df_raw = data_gem
-
-    # ToDo: Awakened gems level 6 are not tagged with "corrupted" in ui
-    # --- currency ---
-    C_TO_DIV = data_cur[data_cur['name'] == "Divine Orb"]['value_chaos'].values[0]
-    C_TO_VAAL = data_cur[data_cur['name'] == "Vaal Orb"]['value_chaos'].values[0]
-
-    # --- gems ---
-    # sort gems
-    df = data_gem.sort_values(['skill', 'qualityType', 'gemLevel'], ascending=[True, True, False])
-
-    # add gem type, i.e. Enlighten -> Exceptional; types: regular, awakened, exceptional, special (blood and sand &
-    # brand recall)
-    df["gem_type"] = ""
-    df = add_gem_types(df)
-
-    # remove vaal skill gems
-    df = df[~df.name.str.contains("Vaal")]
-
-    # add more fields to dataframe
-    df["gem_level_base"] = ""
-    df["gem_quality_base"] = ""
-    df["upgrade_path"] = ""
-    df["buy_c"] = ""
-    df["sell_c"] = ""
-    df["margin_c"] = ""
-    df["buy_divine"] = ""
-    df["sell_divine"] = ""
-    df["margin_divine"] = ""
-    df["margin_gem_specific"] = ""
-    df["roi"] = ""
-    df["ranking_from_roi"] = ""
-    df["gem_color"] = ""
-    df["base_gem"] = ""
-    df["discriminator"] = ""
-    df["query_url"] = ""
-    df["query_html"] = ""
-
+def create_json_data() -> None:
+    """
+    Main function to process gem data and create JSON output.
+    
+    This function:
+    1. Loads raw currency and gem data
+    2. Calculates economic values and margins
+    3. Adds gem metadata and trade URLs
+    4. Saves the processed data as JSON
+    """
+    # Load raw data
+    currency_data = pd.DataFrame.from_dict(
+        dh.load_raw_dict(type="Currency"), 
+        orient="index"
+    )
+    gem_data = pd.DataFrame.from_dict(
+        dh.load_raw_dict(type="Gems"), 
+        orient="index"
+    )
+    
+    # Get currency conversion rates
+    chaos_to_divine = currency_data[
+        currency_data['name'] == "Divine Orb"
+    ]['value_chaos'].iloc[0]
+    
+    # Initialize DataFrame with required columns
+    df = gem_data.sort_values(['skill', 'qualityType', 'gemLevel'], ascending=[True, True, False])
+    
+    # Remove Vaal skill gems
+    df = df[~df['name'].str.contains("Vaal")]
+    
+    # Initialize new columns
+    new_columns = [
+        'gem_type', 'gem_level_base', 'gem_quality_base', 'upgrade_path',
+        'buy_c', 'sell_c', 'margin_c', 'buy_divine', 'sell_divine', 'margin_divine',
+        'margin_gem_specific', 'roi', 'ranking_from_roi', 'gem_color', 'base_gem',
+        'discriminator', 'query_url', 'query_html'
+    ]
+    
+    for col in new_columns:
+        df[col] = ""
+    
+    # Process the data
+    df = classify_gem_types(df)
     df = calculate_chaos_values(df)
-
-    df = calculate_divine_values(df, C_TO_DIV)
-
-    df = calculate_margin_per_xp_and_ranking(df)
-
-    df = add_gem_colors(df)
-
-    df = add_search_url(df)
-
+    df = calculate_divine_values(df, chaos_to_divine)
+    df = calculate_margins_and_rankings(df)
+    df = add_gem_metadata(df)
+    df = add_trade_urls(df)
+    
+    # Save to JSON
     gems_analyzed = df.to_dict(orient="index")
     dh.save_json(gems_analyzed)
