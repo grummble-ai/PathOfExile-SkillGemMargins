@@ -86,13 +86,24 @@ def create_top(df):
     if search_term:
         df = df[df["name"].str.contains(search_term, case=False, na=False)]
 
+    # Add refresh button
+    col1, col2, col3 = st.columns([1, 1, 3])
+    with col1:
+        if st.button("🔄 Refresh Data", help="Update data from poe.ninja"):
+            # Clear the cache to force reload
+            load_data.clear()
+            st.rerun()
+    
+    with col2:
+        st.caption("Last updated: " + dh.last_update())
+
     st.write("_The table below updates automatically when you make changes to your preferences._\n")
 
     st.markdown("---")
     st.subheader(f"2️⃣ Check the Top {NO_RESULTS} Results")
 
-    tab1, tab2, tab3 = st.tabs(["💰 Results Sorted by Normalized Margin", "💎 Results Sorted by Margin",
-                                "💸 Results Sorted by Return of Investment"])
+    tab1, tab2, tab3, tab4 = st.tabs(["💰 Normalized Margin", "💎 Margin", "🎯 Margin Adjusted by Corruption Risk", "💸 Return on Investment"])
+    
     with tab1:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
                              hide_qual=hide_quality_gems, gem_colors=gem_colors, min_c=min_c,
@@ -102,6 +113,10 @@ def create_top(df):
                              hide_qual=hide_quality_gems, gem_colors=gem_colors, min_c=min_c,
                              min_roi=min_roi, mode="margin")
     with tab3:
+        create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
+                             hide_qual=hide_quality_gems, gem_colors=gem_colors, min_c=min_c,
+                             min_roi=min_roi, mode="risk_adjusted")
+    with tab4:
         create_top_table_img(df, hide_conf=low_conf, nr_conf=nr_conf, hide_corr=hide_corrupted_gems,
                              hide_qual=hide_quality_gems, gem_colors=gem_colors, min_c=min_c,
                              min_roi=min_roi, mode="roi")
@@ -159,6 +174,13 @@ def safe_format(val):
         return val  # Leave as is if not a number
 
 
+def format_percentage(val):
+    try:
+        return '{:,.1f}%'.format(float(val) * 100)
+    except (ValueError, TypeError):
+        return val  # Leave as is if not a number
+
+
 def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_colors, min_roi, min_c, mode):
     # various filters
     # filter: low confidence
@@ -201,10 +223,12 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
         df_top10 = df_top10.nlargest(NO_RESULTS, "margin_divine", keep="first")
     elif mode == "margin_rel":
         df_top10 = df_top10.nlargest(NO_RESULTS, "margin_gem_specific", keep="first")
-        df_top10["ranking_from_margin_gem_specific"] = df_top10["margin_gem_specific"].rank(ascending=False, method="min")
     elif mode == "roi":
         # grab the 10 best gems to level by roi
         df_top10 = df_top10.nsmallest(NO_RESULTS, "ranking_from_roi", keep="first")
+    elif mode == "risk_adjusted":
+        # grab the 10 best gems to level by roi
+        df_top10 = df_top10.nlargest(NO_RESULTS, "risk_adjusted_return", keep="first")
 
     # drop unnecessary columns
     df_top10 = df_top10.drop(["value_chaos", "value_divine", "created", "datetime", "corrupted", "qualityType",
@@ -212,12 +236,29 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
                               "gem_level_base", "gem_quality_base", "margin_c", "gem_color", "ranking_from_roi",
                               "base_gem", "discriminator", "ranking_from_margin_gem_specific"], axis=1)
 
-    truncate_list = ["buy_divine", "sell_divine", "margin_divine", "margin_gem_specific", "roi"]
+    # Format regular numeric columns
+    truncate_list = ["buy_divine", "sell_divine", "margin_divine", "margin_gem_specific", "risk_adjusted_return"]
     for col in truncate_list:
-        df_top10[col] = df_top10[col].map(safe_format)
-
-    # reindex icon url and name to show the icon first
-    df_top10 = swap_df_columns(df_top10, "name", "icon_url")
+        if col in df_top10.columns:
+            df_top10[col] = df_top10[col].map(safe_format)
+    
+    # Format ROI columns as percentages
+    roi_columns = ["roi", "risk_adjusted_roi"]
+    for col in roi_columns:
+        if col in df_top10.columns:
+            df_top10[col] = df_top10[col].map(format_percentage)
+    
+    # Reorder columns in the desired sequence
+    column_order = [
+        "icon_url", "name", "buy_c", "sell_c", "upgrade_path", 
+        "buy_divine", "sell_divine", "margin_divine", "risk_adjusted_return", 
+        "margin_gem_specific", "roi", "risk_adjusted_roi", 
+        "listing_count", "query_html"
+    ]
+    
+    # Filter to only include columns that exist in the dataframe
+    existing_columns = [col for col in column_order if col in df_top10.columns]
+    df_top10 = df_top10[existing_columns]
 
     df_top10 = df_top10.rename(columns={"name": "Skill Gem",
                                         "icon_url": "Icon",
@@ -227,9 +268,10 @@ def create_top_table_img(df, hide_conf, nr_conf, hide_corr, hide_qual, gem_color
                                         "buy_divine": column_title_link_to_html("divine", "Buy"),
                                         "sell_divine": column_title_link_to_html("divine", "Sell"),
                                         "margin_divine": column_title_link_to_html("divine", "Margin"),
+                                        "risk_adjusted_return": column_title_link_to_html("divine", "Margin Adjusted by Corruption Risk"),
                                         "margin_gem_specific": "Norm. " + column_title_link_to_html("divine", "Margin"),
-                                        # "average_returns_ex": "Average Returns (Ex)",
                                         "roi": "RoI",
+                                        "risk_adjusted_roi": "RoI Adjusted by Corruption Risk",
                                         "listing_count": "No. Listings",
                                         "query_html": "Link"
                                         })
@@ -274,7 +316,7 @@ def drop_gem_types(df, alt_gem, awaken, exception):
 def create_rawdata(df):
     # ui elements
     create_top_table_img(df, hide_conf=False, nr_conf=0, hide_corr=False,
-                         hide_qual=False, mode="raw")
+                         hide_qual=False, gem_colors=[True, True, True], min_roi=0, min_c=0, mode="raw")
 
 
 def create_FAQ():

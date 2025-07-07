@@ -34,8 +34,19 @@ def get_ex_value(df):
 
 
 def load_gem_info():
-    df = pd.read_excel(path.join(os.getcwd(), "utility", "app1", "gem_colors_325.xlsx"))
-    return df
+    # Try different gem colors files in case one is locked
+    files_to_try = ["gem_colors_325.xlsx", "gem_colors_324.xlsx", "gem_colors_323.xlsx", "gem_colors.xlsx"]
+    
+    for filename in files_to_try:
+        try:
+            df = pd.read_excel(path.join(os.getcwd(), "utility", "app1", filename))
+            return df
+        except (PermissionError, FileNotFoundError):
+            continue
+    
+    # If all files fail, create a minimal dataframe to avoid errors
+    print("Warning: Could not load gem colors file, using minimal data")
+    return pd.DataFrame({'name': [], 'color': [], 'type': [], 'base_gem': [], 'discriminator': []})
 
 
 def add_gem_colors(df):
@@ -202,9 +213,24 @@ def calculate_margin_per_xp_and_ranking(df):
     df = xp_requirement_regular_gems(df)
     # Ensure margin_gem_specific is always float
     df["margin_gem_specific"] = pd.to_numeric(df["margin_gem_specific"], errors="coerce")
+
+
+    # Calculate risk-adjusted return (in divine orbs, normalized by XP)
+    # For corrupted gems: Expected Value = (1/8 * sell_divine) + (7/8 * 0) - buy_divine = sell_divine * 0.125 - buy_divine
+    # For non-corrupted gems: Expected Value = sell_divine - buy_divine = margin_divine
+    df["risk_adjusted_return"] = df["margin_divine"].copy()
+    df.loc[df["corrupted"] == True, "risk_adjusted_return"] = df.loc[df["corrupted"] == True, "sell_divine"] * 0.125 - df.loc[df["corrupted"] == True, "buy_divine"]
+    
+    # calculate risk-adjusted return roi (using divine orbs for consistency)
+    # ROI = (Expected Value - Cost) / Cost = (Expected Value - buy_divine) / buy_divine
+    df["risk_adjusted_roi"] = (df["risk_adjusted_return"])/df["buy_divine"]
+    
+
+
     # rank entries after roi
     df["ranking_from_margin_gem_specific"] = df['margin_gem_specific'].rank(ascending=False)
     df["ranking_from_roi"] = df['roi'].rank(ascending=False)
+    
 
     # sort out all rows with no return of investment (margin 0 or even negative)
     df = df[df["roi"] > 0]
